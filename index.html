@@ -23,12 +23,6 @@ align-items:center;
 height:100vh;
 }
 
-#gameBox{
-display:flex;
-justify-content:center;
-align-items:center;
-}
-
 canvas{
 background:black;
 border-radius:20px;
@@ -38,18 +32,15 @@ touch-action:none;
 </head>
 
 <body>
-<div id="gameBox">
 <canvas id="game"></canvas>
-</div>
 
 <script>
 const canvas=document.getElementById("game")
 const ctx=canvas.getContext("2d")
 
-// 🔥 自動リサイズ（中央寄せ対応）
+// ===== サイズ調整 =====
 function resizeCanvas(){
 const ratio = 16/9
-
 let w = window.innerWidth
 let h = window.innerHeight
 
@@ -64,6 +55,7 @@ canvas.height = canvas.width / ratio
 resizeCanvas()
 window.addEventListener("resize",resizeCanvas)
 
+// ===== 状態 =====
 let state="title"
 let score=0
 let highScore=localStorage.getItem("high")||0
@@ -74,7 +66,7 @@ let maxSpeed=15
 
 let chicken,obstacles=[]
 
-// タップ制御
+// ===== タップ制御 =====
 let lastTap=0
 let ignoreTapUntil=0
 const delay=250
@@ -87,31 +79,35 @@ let now=Date.now()
 
 if(now-lastTap<delay){
 if(chicken.jump<2){
-chicken.vy=-18
+chicken.vy=-canvas.height*0.04
 chicken.jump=2
 }
 }else{
 if(chicken.jump===0){
-chicken.vy=-16
+chicken.vy=-canvas.height*0.035
 chicken.jump=1
 }
 }
-
 lastTap=now
 }
 
 document.addEventListener("touchstart",tap)
 document.addEventListener("mousedown",tap)
 
-// リセット
+// ===== リセット =====
 function reset(){
-chicken={x:canvas.width*0.15,y:canvas.height*0.78,vy:0,jump:0}
+chicken={
+x:canvas.width*0.15,
+y:canvas.height*0.75,
+vy:0,
+jump:0
+}
 obstacles=[]
 score=0
 speed=baseSpeed
 }
 
-// 難易度
+// ===== 難易度 =====
 function start(d){
 if(d=="easy"){baseSpeed=5;maxSpeed=10}
 else if(d=="hard"){baseSpeed=9;maxSpeed=18}
@@ -122,7 +118,7 @@ state="game"
 ignoreTapUntil=Date.now()+200
 }
 
-// 座標補正
+// ===== 座標 =====
 function getPos(e){
 const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
@@ -145,28 +141,28 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// サボテン
+// ===== サボテン =====
 setInterval(()=>{
 if(state=="game"){
 let h=canvas.height*0.08 + Math.random()*canvas.height*0.08
 obstacles.push({
 x:canvas.width,
 y:canvas.height*0.83 - h,
-w:canvas.width*0.02,
+w:canvas.width*0.03,
 h:h
 })
 }
 },1200)
 
-// 更新
+// ===== 更新 =====
 function update(){
 if(state!="game")return
 
-chicken.vy+=canvas.height*0.001
+chicken.vy+=canvas.height*0.002
 chicken.y+=chicken.vy
 
-if(chicken.y>canvas.height*0.78){
-chicken.y=canvas.height*0.78
+if(chicken.y>canvas.height*0.75){
+chicken.y=canvas.height*0.75
 chicken.vy=0
 chicken.jump=0
 }
@@ -177,11 +173,12 @@ if(speed>maxSpeed)speed=maxSpeed
 obstacles.forEach(o=>{
 o.x-=speed*(canvas.width/1280)
 
+// 🔥 正しい当たり判定
 if(
-chicken.x<o.x+o.w &&
-chicken.x+50<canvas.width*0.05+o.x &&
-chicken.y<o.y+o.h &&
-chicken.y+50>o.y
+chicken.x < o.x + o.w &&
+chicken.x + canvas.width*0.04 > o.x &&
+chicken.y < o.y + o.h &&
+chicken.y + canvas.width*0.04 > o.y
 ){
 state="gameover"
 ignoreTapUntil=Date.now()+300
@@ -197,7 +194,7 @@ obstacles=obstacles.filter(o=>o.x>-50)
 score++
 }
 
-// ボタン
+// ===== ボタン =====
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
@@ -208,7 +205,7 @@ ctx.textAlign="center"
 ctx.fillText(text,x+w/2,y+h/2+10)
 }
 
-// タイトル
+// ===== タイトル =====
 function drawTitle(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,canvas.width,canvas.height)
@@ -224,7 +221,7 @@ drawBtn(canvas.width*0.35,canvas.height*0.6,canvas.width*0.3,80,"NORMAL")
 drawBtn(canvas.width*0.35,canvas.height*0.75,canvas.width*0.3,80,"HARD")
 }
 
-// ゲーム
+// ===== ゲーム =====
 function drawGame(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,canvas.width,canvas.height)
@@ -232,7 +229,7 @@ ctx.fillRect(0,0,canvas.width,canvas.height)
 ctx.fillStyle="#8B4513"
 ctx.fillRect(0,canvas.height*0.83,canvas.width,canvas.height*0.17)
 
-ctx.font=(canvas.width*0.04)+"px JK"
+ctx.font=(canvas.width*0.05)+"px JK"
 ctx.fillText("🐔",chicken.x,chicken.y+40)
 
 ctx.fillStyle="green"
@@ -248,7 +245,7 @@ ctx.fillText("High "+highScore,20,80)
 drawBtn(canvas.width-120,20,100,50,"☰")
 }
 
-// メニュー
+// ===== メニュー =====
 function drawMenu(){
 ctx.fillStyle="rgba(0,0,0,0.7)"
 ctx.fillRect(0,0,canvas.width,canvas.height)
@@ -263,7 +260,7 @@ drawBtn(canvas.width*0.27,canvas.height*0.27+h,canvas.width*0.46,h-10,"リスタ
 drawBtn(canvas.width*0.27,canvas.height*0.27+h*2,canvas.width*0.46,h-10,"タイトル")
 }
 
-// ゲームオーバー
+// ===== ゲームオーバー =====
 function drawGameOver(){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,canvas.width,canvas.height)
@@ -272,4 +269,7 @@ ctx.fillStyle="white"
 ctx.textAlign="center"
 
 ctx.font=(canvas.width*0.06)+"px JK"
-ctx.fillText("GAME OVER",canvas.width
+ctx.fillText("GAME OVER",canvas.width/2,canvas.height*0.4)
+
+ctx.font=(canvas.width*0.03)+"px JK"
+ctx.fill
