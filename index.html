@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>ちきんゲーム</title>
-
-<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 
 <style>
@@ -26,17 +24,14 @@ height:100vh;
 }
 
 #gameBox{
-width:90vw;
-max-width:800px;
-aspect-ratio:16/9;
-background:black;
-border-radius:20px;
-overflow:hidden;
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
 canvas{
-width:100%;
-height:100%;
+background:black;
+border-radius:20px;
 touch-action:none;
 }
 </style>
@@ -51,8 +46,23 @@ touch-action:none;
 const canvas=document.getElementById("game")
 const ctx=canvas.getContext("2d")
 
-canvas.width=1280
-canvas.height=720
+// 🔥 自動リサイズ（中央寄せ対応）
+function resizeCanvas(){
+const ratio = 16/9
+
+let w = window.innerWidth
+let h = window.innerHeight
+
+if(w/h > ratio){
+canvas.height = h * 0.9
+canvas.width = canvas.height * ratio
+}else{
+canvas.width = w * 0.9
+canvas.height = canvas.width / ratio
+}
+}
+resizeCanvas()
+window.addEventListener("resize",resizeCanvas)
 
 let state="title"
 let score=0
@@ -95,7 +105,7 @@ document.addEventListener("mousedown",tap)
 
 // リセット
 function reset(){
-chicken={x:200,y:560,vy:0,jump:0}
+chicken={x:canvas.width*0.15,y:canvas.height*0.78,vy:0,jump:0}
 obstacles=[]
 score=0
 speed=baseSpeed
@@ -112,7 +122,7 @@ state="game"
 ignoreTapUntil=Date.now()+200
 }
 
-// 座標
+// 座標補正
 function getPos(e){
 const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
@@ -135,14 +145,14 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// サボテン生成
+// サボテン
 setInterval(()=>{
 if(state=="game"){
-let h=40+Math.random()*60
+let h=canvas.height*0.08 + Math.random()*canvas.height*0.08
 obstacles.push({
-x:1280,
-y:600-h,
-w:30,
+x:canvas.width,
+y:canvas.height*0.83 - h,
+w:canvas.width*0.02,
 h:h
 })
 }
@@ -152,11 +162,11 @@ h:h
 function update(){
 if(state!="game")return
 
-chicken.vy+=0.8
+chicken.vy+=canvas.height*0.001
 chicken.y+=chicken.vy
 
-if(chicken.y>560){
-chicken.y=560
+if(chicken.y>canvas.height*0.78){
+chicken.y=canvas.height*0.78
 chicken.vy=0
 chicken.jump=0
 }
@@ -165,11 +175,11 @@ speed=baseSpeed+score*0.005
 if(speed>maxSpeed)speed=maxSpeed
 
 obstacles.forEach(o=>{
-o.x-=speed
+o.x-=speed*(canvas.width/1280)
 
 if(
 chicken.x<o.x+o.w &&
-chicken.x+50>o.x &&
+chicken.x+50<canvas.width*0.05+o.x &&
 chicken.y<o.y+o.h &&
 chicken.y+50>o.y
 ){
@@ -193,7 +203,7 @@ ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
 
 ctx.fillStyle="black"
-ctx.font="35px JK"
+ctx.font=(canvas.width*0.03)+"px JK"
 ctx.textAlign="center"
 ctx.fillText(text,x+w/2,y+h/2+10)
 }
@@ -201,28 +211,28 @@ ctx.fillText(text,x+w/2,y+h/2+10)
 // タイトル
 function drawTitle(){
 ctx.fillStyle="#87CEEB"
-ctx.fillRect(0,0,1280,720)
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
 ctx.fillStyle="black"
 ctx.textAlign="center"
 
-ctx.font="70px JK"
-ctx.fillText("🐔 ちきんゲーム",640,200)
+ctx.font=(canvas.width*0.06)+"px JK"
+ctx.fillText("🐔 ちきんゲーム",canvas.width/2,canvas.height*0.25)
 
-drawBtn(440,350,400,80,"EASY")
-drawBtn(440,460,400,80,"NORMAL")
-drawBtn(440,570,400,80,"HARD")
+drawBtn(canvas.width*0.35,canvas.height*0.45,canvas.width*0.3,80,"EASY")
+drawBtn(canvas.width*0.35,canvas.height*0.6,canvas.width*0.3,80,"NORMAL")
+drawBtn(canvas.width*0.35,canvas.height*0.75,canvas.width*0.3,80,"HARD")
 }
 
 // ゲーム
 function drawGame(){
 ctx.fillStyle="#87CEEB"
-ctx.fillRect(0,0,1280,720)
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
 ctx.fillStyle="#8B4513"
-ctx.fillRect(0,600,1280,120)
+ctx.fillRect(0,canvas.height*0.83,canvas.width,canvas.height*0.17)
 
-ctx.font="50px JK"
+ctx.font=(canvas.width*0.04)+"px JK"
 ctx.fillText("🐔",chicken.x,chicken.y+40)
 
 ctx.fillStyle="green"
@@ -230,123 +240,36 @@ obstacles.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h))
 
 ctx.fillStyle="black"
 ctx.textAlign="left"
-ctx.font="40px JK"
+ctx.font=(canvas.width*0.03)+"px JK"
 
-ctx.fillText("Score "+score,40,60)
-ctx.fillText("High "+highScore,40,110)
+ctx.fillText("Score "+score,20,40)
+ctx.fillText("High "+highScore,20,80)
 
-drawBtn(1100,20,140,60,"☰")
+drawBtn(canvas.width-120,20,100,50,"☰")
 }
 
 // メニュー
 function drawMenu(){
 ctx.fillStyle="rgba(0,0,0,0.7)"
-ctx.fillRect(0,0,1280,720)
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
 ctx.fillStyle="white"
-ctx.fillRect(340,180,600,360)
+ctx.fillRect(canvas.width*0.25,canvas.height*0.25,canvas.width*0.5,canvas.height*0.4)
 
-let h=360/3
+let h=canvas.height*0.4/3
 
-drawBtn(360,200,560,h-20,"再開")
-drawBtn(360,200+h,560,h-20,"リスタート")
-drawBtn(360,200+h*2,560,h-20,"タイトル")
+drawBtn(canvas.width*0.27,canvas.height*0.27,canvas.width*0.46,h-10,"再開")
+drawBtn(canvas.width*0.27,canvas.height*0.27+h,canvas.width*0.46,h-10,"リスタート")
+drawBtn(canvas.width*0.27,canvas.height*0.27+h*2,canvas.width*0.46,h-10,"タイトル")
 }
 
 // ゲームオーバー
 function drawGameOver(){
 ctx.fillStyle="black"
-ctx.fillRect(0,0,1280,720)
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
 ctx.fillStyle="white"
 ctx.textAlign="center"
 
-ctx.font="70px JK"
-ctx.fillText("💀 GAME OVER",640,260)
-
-ctx.font="40px JK"
-ctx.fillText("Score "+score,640,330)
-
-drawBtn(440,420,400,80,"RESTART")
-drawBtn(440,530,400,80,"TITLE")
-}
-
-// クリック処理
-function handleClick(x,y){
-
-if(Date.now()<ignoreTapUntil) return
-
-if(state=="title"){
-if(inRect(x,y,440,350,400,80))start("easy")
-if(inRect(x,y,440,460,400,80))start("normal")
-if(inRect(x,y,440,570,400,80))start("hard")
-}
-
-else if(state=="game"){
-if(inRect(x,y,1100,20,140,60)){
-state="menu"
-ignoreTapUntil=Date.now()+200
-}
-}
-
-else if(state=="menu"){
-let h=360/3
-
-if(inRect(x,y,360,200,560,h-20)){
-state="game"
-ignoreTapUntil=Date.now()+200
-}
-
-if(inRect(x,y,360,200+h,560,h-20)){
-reset()
-state="game"
-ignoreTapUntil=Date.now()+200
-}
-
-if(inRect(x,y,360,200+h*2,560,h-20)){
-state="title"
-ignoreTapUntil=Date.now()+300
-}
-}
-
-else if(state=="gameover"){
-if(inRect(x,y,440,420,400,80)){
-reset()
-state="game"
-ignoreTapUntil=Date.now()+200
-}
-
-if(inRect(x,y,440,530,400,80)){
-state="title"
-ignoreTapUntil=Date.now()+300
-}
-}
-}
-
-// イベント
-canvas.addEventListener("click",e=>{
-let p=getPos(e)
-handleClick(p.x,p.y)
-})
-
-canvas.addEventListener("touchstart",e=>{
-let p=getPos(e)
-handleClick(p.x,p.y)
-})
-
-// ループ
-function loop(){
-update()
-
-if(state=="title")drawTitle()
-if(state=="game")drawGame()
-if(state=="menu")drawMenu()
-if(state=="gameover")drawGameOver()
-
-requestAnimationFrame(loop)
-}
-
-loop()
-</script>
-</body>
-</html>
+ctx.font=(canvas.width*0.06)+"px JK"
+ctx.fillText("GAME OVER",canvas.width
