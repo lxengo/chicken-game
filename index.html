@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>ちきんゲーム</title>
-<link rel="manifest" href="manifest.json">
 
 <style>
 @font-face{
@@ -62,9 +61,17 @@ let maxSpeed=15
 
 let chicken,obstacles=[]
 
-// タップ制御
+// ===== 時間 =====
+let time=0  // 1フレーム=約1/60秒 → 900で約15秒
+
+// ===== 演出 =====
+let clouds=[]
+let stars=[]
+
+// ===== 入力制御 =====
 let lastTap=0
 let ignoreTapUntil=0
+let inputDelay=0
 const delay=250
 
 function tap(){
@@ -90,15 +97,18 @@ lastTap=now
 document.addEventListener("touchstart",tap)
 document.addEventListener("mousedown",tap)
 
-// リセット
+// ===== 初期化 =====
 function reset(){
 chicken={x:200,y:560,vy:0,jump:0}
 obstacles=[]
 score=0
 speed=baseSpeed
+time=0
+clouds=[]
+stars=[]
 }
 
-// 難易度
+// ===== 難易度 =====
 function start(d){
 if(d=="easy"){baseSpeed=5;maxSpeed=10}
 else if(d=="hard"){baseSpeed=9;maxSpeed=18}
@@ -107,9 +117,10 @@ else{baseSpeed=7;maxSpeed=15}
 reset()
 state="game"
 ignoreTapUntil=Date.now()+200
+inputDelay=20
 }
 
-// 座標
+// ===== 座標 =====
 function getPos(e){
 const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
@@ -132,22 +143,37 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// サボテン
+// ===== サボテン =====
 setInterval(()=>{
 if(state=="game"){
 let h=40+Math.random()*60
-obstacles.push({
-x:1280,
-y:600-h,
-w:30,
-h:h
-})
+obstacles.push({x:1280,y:600-h,w:30,h:h})
 }
 },1200)
 
-// 更新
+// ===== 雲・星 =====
+setInterval(()=>{
+if(state=="game"){
+let phase=time%2700
+
+// 昼（30秒）
+if(phase>=900 && phase<1800){
+clouds.push({x:1280,y:50+Math.random()*200,size:40+Math.random()*30})
+}
+
+// 夜（30秒）
+if(phase>=1800){
+stars.push({x:1280,y:Math.random()*400,size:2+Math.random()*3})
+}
+}
+},800)
+
+// ===== 更新 =====
 function update(){
 if(state!="game")return
+
+time++
+if(inputDelay>0) inputDelay--
 
 chicken.vy+=0.8
 chicken.y+=chicken.vy
@@ -180,11 +206,19 @@ localStorage.setItem("high",highScore)
 }
 })
 
+// 雲
+clouds.forEach(c=>c.x-=2)
+clouds=clouds.filter(c=>c.x>-100)
+
+// 星
+stars.forEach(s=>s.x-=4)
+stars=stars.filter(s=>s.x>-10)
+
 obstacles=obstacles.filter(o=>o.x>-50)
 score++
 }
 
-// ボタン
+// ===== ボタン =====
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
@@ -195,7 +229,7 @@ ctx.textAlign="center"
 ctx.fillText(text,x+w/2,y+h/2+10)
 }
 
-// タイトル
+// ===== タイトル =====
 function drawTitle(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
@@ -211,21 +245,69 @@ drawBtn(440,460,400,80,"NORMAL")
 drawBtn(440,570,400,80,"HARD")
 }
 
-// ゲーム
+// ===== ゲーム =====
 function drawGame(){
-ctx.fillStyle="#87CEEB"
+
+let phase=time%2700
+
+// 背景（30秒ごと）
+if(phase<900){
+ctx.fillStyle="#87CEEB" // 朝
+}
+else if(phase<1800){
+ctx.fillStyle="#4FC3F7" // 昼
+}
+else{
+ctx.fillStyle="#0B1A3C" // 夜
+}
 ctx.fillRect(0,0,1280,720)
 
+// 太陽・月
+ctx.beginPath()
+ctx.arc(1000,80,35,0,Math.PI*2)
+ctx.fillStyle=(phase<1800)?"yellow":"white"
+ctx.fill()
+
+// 雲（昼）
+if(phase>=900 && phase<1800){
+ctx.fillStyle="white"
+clouds.forEach(c=>{
+ctx.beginPath()
+ctx.arc(c.x,c.y,c.size,0,Math.PI*2)
+ctx.arc(c.x+30,c.y+10,c.size*0.8,0,Math.PI*2)
+ctx.arc(c.x-30,c.y+10,c.size*0.8,0,Math.PI*2)
+ctx.fill()
+})
+}
+
+// 星（夜）
+if(phase>=1800){
+ctx.fillStyle="white"
+stars.forEach(s=>{
+ctx.beginPath()
+ctx.arc(s.x,s.y,s.size,0,Math.PI*2)
+ctx.fill()
+})
+}
+
+// 地面
 ctx.fillStyle="#8B4513"
 ctx.fillRect(0,600,1280,120)
 
+// ニワトリ
 ctx.font="50px JK"
 ctx.fillText("🐔",chicken.x,chicken.y+40)
 
+// サボテン
+obstacles.forEach(o=>{
 ctx.fillStyle="green"
-obstacles.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h))
+ctx.fillRect(o.x,o.y,o.w,o.h)
+ctx.fillRect(o.x-10,o.y+20,10,30)
+ctx.fillRect(o.x+o.w,o.y+30,10,30)
+})
 
-ctx.fillStyle="black"
+// 文字色
+ctx.fillStyle=(phase<1800)?"black":"white"
 ctx.textAlign="left"
 ctx.font="40px JK"
 
@@ -235,7 +317,7 @@ ctx.fillText("High "+highScore,40,110)
 drawBtn(1100,20,140,60,"☰")
 }
 
-// メニュー
+// ===== メニュー =====
 function drawMenu(){
 ctx.fillStyle="rgba(0,0,0,0.7)"
 ctx.fillRect(0,0,1280,720)
@@ -250,7 +332,7 @@ drawBtn(360,200+h,560,h-20,"リスタート")
 drawBtn(360,200+h*2,560,h-20,"タイトル")
 }
 
-// ゲームオーバー
+// ===== ゲームオーバー =====
 function drawGameOver(){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,1280,720)
@@ -268,8 +350,10 @@ drawBtn(440,420,400,80,"RESTART")
 drawBtn(440,530,400,80,"TITLE")
 }
 
-// クリック
+// ===== クリック =====
 function handleClick(x,y){
+
+if(inputDelay>0) return
 if(Date.now()<ignoreTapUntil) return
 
 if(state=="title"){
@@ -281,7 +365,7 @@ if(inRect(x,y,440,570,400,80))start("hard")
 else if(state=="game"){
 if(inRect(x,y,1100,20,140,60)){
 state="menu"
-ignoreTapUntil=Date.now()+200
+inputDelay=20
 }
 }
 
@@ -290,12 +374,12 @@ let h=360/3
 
 if(inRect(x,y,360,200,560,h-20)){state="game"}
 if(inRect(x,y,360,200+h,560,h-20)){reset();state="game"}
-if(inRect(x,y,360,200+h*2,560,h-20)){state="title"}
+if(inRect(x,y,360,200+h*2,560,h-20)){state="title";inputDelay=20}
 }
 
 else if(state=="gameover"){
 if(inRect(x,y,440,420,400,80)){reset();state="game"}
-if(inRect(x,y,440,530,400,80)){state="title"}
+if(inRect(x,y,440,530,400,80)){state="title";inputDelay=20}
 }
 }
 
@@ -309,7 +393,7 @@ let p=getPos(e)
 handleClick(p.x,p.y)
 })
 
-// ループ
+// ===== ループ =====
 function loop(){
 update()
 
