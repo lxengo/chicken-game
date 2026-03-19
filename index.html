@@ -6,6 +6,10 @@
 
 <title>ちきんゲーム</title>
 
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+
 <style>
 @font-face{
 font-family:"JK";
@@ -61,8 +65,8 @@ let maxSpeed=15
 
 let chicken,obstacles=[]
 
-// ===== 時間 =====
-let time=0  // 1フレーム=約1/60秒 → 900で約15秒
+// ===== 時間（90秒ループ）=====
+let time=0
 
 // ===== 演出 =====
 let clouds=[]
@@ -156,12 +160,9 @@ setInterval(()=>{
 if(state=="game"){
 let phase=time%2700
 
-// 昼（30秒）
 if(phase>=900 && phase<1800){
 clouds.push({x:1280,y:50+Math.random()*200,size:40+Math.random()*30})
 }
-
-// 夜（30秒）
 if(phase>=1800){
 stars.push({x:1280,y:Math.random()*400,size:2+Math.random()*3})
 }
@@ -206,11 +207,9 @@ localStorage.setItem("high",highScore)
 }
 })
 
-// 雲
 clouds.forEach(c=>c.x-=2)
 clouds=clouds.filter(c=>c.x>-100)
 
-// 星
 stars.forEach(s=>s.x-=4)
 stars=stars.filter(s=>s.x>-10)
 
@@ -250,15 +249,14 @@ function drawGame(){
 
 let phase=time%2700
 
-// 背景（30秒ごと）
 if(phase<900){
-ctx.fillStyle="#87CEEB" // 朝
+ctx.fillStyle="#87CEEB"
 }
 else if(phase<1800){
-ctx.fillStyle="#4FC3F7" // 昼
+ctx.fillStyle="#4FC3F7"
 }
 else{
-ctx.fillStyle="#0B1A3C" // 夜
+ctx.fillStyle="#0B1A3C"
 }
 ctx.fillRect(0,0,1280,720)
 
@@ -268,7 +266,7 @@ ctx.arc(1000,80,35,0,Math.PI*2)
 ctx.fillStyle=(phase<1800)?"yellow":"white"
 ctx.fill()
 
-// 雲（昼）
+// 雲
 if(phase>=900 && phase<1800){
 ctx.fillStyle="white"
 clouds.forEach(c=>{
@@ -280,7 +278,7 @@ ctx.fill()
 })
 }
 
-// 星（夜）
+// 星
 if(phase>=1800){
 ctx.fillStyle="white"
 stars.forEach(s=>{
@@ -306,7 +304,7 @@ ctx.fillRect(o.x-10,o.y+20,10,30)
 ctx.fillRect(o.x+o.w,o.y+30,10,30)
 })
 
-// 文字色
+// 文字
 ctx.fillStyle=(phase<1800)?"black":"white"
 ctx.textAlign="left"
 ctx.font="40px JK"
@@ -316,96 +314,3 @@ ctx.fillText("High "+highScore,40,110)
 
 drawBtn(1100,20,140,60,"☰")
 }
-
-// ===== メニュー =====
-function drawMenu(){
-ctx.fillStyle="rgba(0,0,0,0.7)"
-ctx.fillRect(0,0,1280,720)
-
-ctx.fillStyle="white"
-ctx.fillRect(340,180,600,360)
-
-let h=360/3
-
-drawBtn(360,200,560,h-20,"再開")
-drawBtn(360,200+h,560,h-20,"リスタート")
-drawBtn(360,200+h*2,560,h-20,"タイトル")
-}
-
-// ===== ゲームオーバー =====
-function drawGameOver(){
-ctx.fillStyle="black"
-ctx.fillRect(0,0,1280,720)
-
-ctx.fillStyle="white"
-ctx.textAlign="center"
-
-ctx.font="70px JK"
-ctx.fillText("GAME OVER",640,260)
-
-ctx.font="40px JK"
-ctx.fillText("Score "+score,640,330)
-
-drawBtn(440,420,400,80,"RESTART")
-drawBtn(440,530,400,80,"TITLE")
-}
-
-// ===== クリック =====
-function handleClick(x,y){
-
-if(inputDelay>0) return
-if(Date.now()<ignoreTapUntil) return
-
-if(state=="title"){
-if(inRect(x,y,440,350,400,80))start("easy")
-if(inRect(x,y,440,460,400,80))start("normal")
-if(inRect(x,y,440,570,400,80))start("hard")
-}
-
-else if(state=="game"){
-if(inRect(x,y,1100,20,140,60)){
-state="menu"
-inputDelay=20
-}
-}
-
-else if(state=="menu"){
-let h=360/3
-
-if(inRect(x,y,360,200,560,h-20)){state="game"}
-if(inRect(x,y,360,200+h,560,h-20)){reset();state="game"}
-if(inRect(x,y,360,200+h*2,560,h-20)){state="title";inputDelay=20}
-}
-
-else if(state=="gameover"){
-if(inRect(x,y,440,420,400,80)){reset();state="game"}
-if(inRect(x,y,440,530,400,80)){state="title";inputDelay=20}
-}
-}
-
-canvas.addEventListener("click",e=>{
-let p=getPos(e)
-handleClick(p.x,p.y)
-})
-
-canvas.addEventListener("touchstart",e=>{
-let p=getPos(e)
-handleClick(p.x,p.y)
-})
-
-// ===== ループ =====
-function loop(){
-update()
-
-if(state=="title")drawTitle()
-if(state=="game")drawGame()
-if(state=="menu")drawMenu()
-if(state=="gameover")drawGameOver()
-
-requestAnimationFrame(loop)
-}
-
-loop()
-</script>
-</body>
-</html>
