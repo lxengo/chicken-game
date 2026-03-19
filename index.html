@@ -6,9 +6,6 @@
 
 <title>ちきんゲーム</title>
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-
 <style>
 @font-face{
 font-family:"JK";
@@ -73,8 +70,8 @@ let ignoreTapUntil=0
 let inputDelay=0
 const delay=250
 
-// ===== タップ（ゲーム専用）=====
-function tap(e){
+// ===== ジャンプ =====
+function tap(){
 if(state!=="game") return
 if(Date.now()<ignoreTapUntil) return
 
@@ -93,10 +90,6 @@ chicken.jump=1
 }
 lastTap=now
 }
-
-// canvasだけに限定（超重要）
-canvas.addEventListener("touchstart",tap)
-canvas.addEventListener("mousedown",tap)
 
 // ===== 初期化 =====
 function reset(){
@@ -246,36 +239,23 @@ function drawGame(){
 
 let phase=time%2700
 
-if(phase<900){
-ctx.fillStyle="#87CEEB"
-}
-else if(phase<1800){
-ctx.fillStyle="#4FC3F7"
-}
-else{
-ctx.fillStyle="#0B1A3C"
-}
+ctx.fillStyle=phase<900?"#87CEEB":phase<1800?"#4FC3F7":"#0B1A3C"
 ctx.fillRect(0,0,1280,720)
 
-// 太陽・月
 ctx.beginPath()
-ctx.arc(1000,80,35,0,Math.PI*2)
-ctx.fillStyle=(phase<1800)?"yellow":"white"
+ctx.arc(1000,80,30,0,Math.PI*2)
+ctx.fillStyle=phase<1800?"yellow":"white"
 ctx.fill()
 
-// 雲
 if(phase>=900 && phase<1800){
 ctx.fillStyle="white"
 clouds.forEach(c=>{
 ctx.beginPath()
 ctx.arc(c.x,c.y,c.size,0,Math.PI*2)
-ctx.arc(c.x+30,c.y+10,c.size*0.8,0,Math.PI*2)
-ctx.arc(c.x-30,c.y+10,c.size*0.8,0,Math.PI*2)
 ctx.fill()
 })
 }
 
-// 星
 if(phase>=1800){
 ctx.fillStyle="white"
 stars.forEach(s=>{
@@ -285,27 +265,20 @@ ctx.fill()
 })
 }
 
-// 地面
 ctx.fillStyle="#8B4513"
 ctx.fillRect(0,600,1280,120)
 
-// ニワトリ
 ctx.font="50px JK"
 ctx.fillText("🐔",chicken.x,chicken.y+40)
 
-// サボテン
 obstacles.forEach(o=>{
 ctx.fillStyle="green"
 ctx.fillRect(o.x,o.y,o.w,o.h)
-ctx.fillRect(o.x-10,o.y+20,10,30)
-ctx.fillRect(o.x+o.w,o.y+30,10,30)
 })
 
-// スコア
-ctx.fillStyle=(phase<1800)?"black":"white"
+ctx.fillStyle=phase<1800?"black":"white"
 ctx.textAlign="left"
 ctx.font="40px JK"
-
 ctx.fillText("Score "+score,40,60)
 ctx.fillText("High "+highScore,40,110)
 
@@ -345,6 +318,19 @@ drawBtn(440,420,400,80,"RESTART")
 drawBtn(440,530,400,80,"TITLE")
 }
 
+// ===== 入力（統合！）=====
+canvas.addEventListener("touchstart",e=>{
+let p=getPos(e)
+handleClick(p.x,p.y)
+tap()
+})
+
+canvas.addEventListener("mousedown",e=>{
+let p=getPos(e)
+handleClick(p.x,p.y)
+tap()
+})
+
 // ===== クリック処理 =====
 function handleClick(x,y){
 
@@ -378,17 +364,6 @@ if(inRect(x,y,440,530,400,80)){state="title";inputDelay=20}
 }
 }
 
-// クリックは別管理
-canvas.addEventListener("click",e=>{
-let p=getPos(e)
-handleClick(p.x,p.y)
-})
-
-canvas.addEventListener("touchstart",e=>{
-let p=getPos(e)
-handleClick(p.x,p.y)
-})
-
 // ===== ループ =====
 function loop(){
 update()
@@ -402,11 +377,6 @@ requestAnimationFrame(loop)
 }
 loop()
 
-// ===== PWA =====
-if('serviceWorker' in navigator){
-navigator.serviceWorker.register('sw.js')
-}
 </script>
-
 </body>
 </html>
