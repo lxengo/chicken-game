@@ -73,8 +73,9 @@ let ignoreTapUntil=0
 let inputDelay=0
 const delay=250
 
-function tap(){
-if(state!="game") return
+// ===== タップ（ゲーム専用）=====
+function tap(e){
+if(state!=="game") return
 if(Date.now()<ignoreTapUntil) return
 
 let now=Date.now()
@@ -93,9 +94,11 @@ chicken.jump=1
 lastTap=now
 }
 
-document.addEventListener("touchstart",tap)
-document.addEventListener("mousedown",tap)
+// canvasだけに限定（超重要）
+canvas.addEventListener("touchstart",tap)
+canvas.addEventListener("mousedown",tap)
 
+// ===== 初期化 =====
 function reset(){
 chicken={x:200,y:560,vy:0,jump:0}
 obstacles=[]
@@ -106,6 +109,7 @@ clouds=[]
 stars=[]
 }
 
+// ===== 難易度 =====
 function start(d){
 if(d=="easy"){baseSpeed=5;maxSpeed=10}
 else if(d=="hard"){baseSpeed=9;maxSpeed=18}
@@ -117,6 +121,7 @@ ignoreTapUntil=Date.now()+200
 inputDelay=20
 }
 
+// ===== 座標 =====
 function getPos(e){
 const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
@@ -139,7 +144,7 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// サボテン
+// ===== サボテン =====
 setInterval(()=>{
 if(state=="game"){
 let h=40+Math.random()*60
@@ -147,7 +152,7 @@ obstacles.push({x:1280,y:600-h,w:30,h:h})
 }
 },1200)
 
-// 雲・星
+// ===== 雲・星 =====
 setInterval(()=>{
 if(state=="game"){
 let phase=time%2700
@@ -161,6 +166,7 @@ stars.push({x:1280,y:Math.random()*400,size:2+Math.random()*3})
 }
 },800)
 
+// ===== 更新 =====
 function update(){
 if(state!="game")return
 
@@ -208,6 +214,7 @@ obstacles=obstacles.filter(o=>o.x>-50)
 score++
 }
 
+// ===== ボタン =====
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
@@ -218,6 +225,7 @@ ctx.textAlign="center"
 ctx.fillText(text,x+w/2,y+h/2+10)
 }
 
+// ===== タイトル =====
 function drawTitle(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
@@ -233,6 +241,7 @@ drawBtn(440,460,400,80,"NORMAL")
 drawBtn(440,570,400,80,"HARD")
 }
 
+// ===== ゲーム =====
 function drawGame(){
 
 let phase=time%2700
@@ -303,6 +312,7 @@ ctx.fillText("High "+highScore,40,110)
 drawBtn(1100,20,140,60,"☰")
 }
 
+// ===== メニュー =====
 function drawMenu(){
 ctx.fillStyle="rgba(0,0,0,0.7)"
 ctx.fillRect(0,0,1280,720)
@@ -317,6 +327,7 @@ drawBtn(360,200+h,560,h-20,"リスタート")
 drawBtn(360,200+h*2,560,h-20,"タイトル")
 }
 
+// ===== ゲームオーバー =====
 function drawGameOver(){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,1280,720)
@@ -334,6 +345,7 @@ drawBtn(440,420,400,80,"RESTART")
 drawBtn(440,530,400,80,"TITLE")
 }
 
+// ===== クリック処理 =====
 function handleClick(x,y){
 
 if(inputDelay>0) return
@@ -366,6 +378,7 @@ if(inRect(x,y,440,530,400,80)){state="title";inputDelay=20}
 }
 }
 
+// クリックは別管理
 canvas.addEventListener("click",e=>{
 let p=getPos(e)
 handleClick(p.x,p.y)
@@ -376,6 +389,7 @@ let p=getPos(e)
 handleClick(p.x,p.y)
 })
 
+// ===== ループ =====
 function loop(){
 update()
 
@@ -388,7 +402,7 @@ requestAnimationFrame(loop)
 }
 loop()
 
-// PWA
+// ===== PWA =====
 if('serviceWorker' in navigator){
 navigator.serviceWorker.register('sw.js')
 }
