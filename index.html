@@ -48,8 +48,13 @@ touch-action:none;
 const canvas=document.getElementById("game")
 const ctx=canvas.getContext("2d")
 
-canvas.width=1280
-canvas.height=720
+function resizeCanvas(){
+const box=document.getElementById("gameBox")
+canvas.width=box.clientWidth
+canvas.height=box.clientHeight
+}
+resizeCanvas()
+window.addEventListener("resize",resizeCanvas)
 
 let state="title"
 let chicken, obstacles=[]
@@ -64,14 +69,12 @@ let lastTap=0
 const delay=250
 
 let time=0
-
-// サボテン間隔
 let spawnTimer=0
 let spawnInterval=100
 
 // ===== 初期化 =====
 function reset(){
-chicken={x:200,y:560,vy:0,jumpCount:0}
+chicken={x:100,y:canvas.height-120,vy:0,jumpCount:0}
 obstacles=[]
 score=0
 time=0
@@ -93,7 +96,6 @@ function getPos(e){
 const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
 const sy=canvas.height/r.height
-
 return{
 x:(e.clientX-r.left)*sx,
 y:(e.clientY-r.top)*sy
@@ -104,7 +106,7 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// ===== ジャンプ（2段）=====
+// ===== ジャンプ =====
 function jump(){
 if(chicken.jumpCount<2){
 chicken.vy=-16
@@ -115,41 +117,36 @@ chicken.jumpCount++
 // ===== 入力 =====
 canvas.addEventListener("pointerdown", e=>{
 e.preventDefault()
-
 let p=getPos(e)
-
 handleClick(p.x,p.y)
-
-if(state==="game"){
-jump()
-}
+if(state==="game") jump()
 })
 
 // ===== クリック処理 =====
 function handleClick(x,y){
 
 if(state==="title"){
-if(inRect(x,y,440,350,400,80)) start("easy")
-if(inRect(x,y,440,460,400,80)) start("normal")
-if(inRect(x,y,440,570,400,80)) start("hard")
+if(inRect(x,y,canvas.width/2-200,300,400,70)) start("easy")
+if(inRect(x,y,canvas.width/2-200,390,400,70)) start("normal")
+if(inRect(x,y,canvas.width/2-200,480,400,70)) start("hard")
 }
 
 else if(state==="game"){
-if(inRect(x,y,1100,20,140,60)){
-state="menu"
-}
+if(inRect(x,y,canvas.width-150,20,130,50)) state="menu"
 }
 
 else if(state==="menu"){
-let h=120
-if(inRect(x,y,360,200,560,h)){state="game"}
-if(inRect(x,y,360,320,560,h)){reset();state="game"}
-if(inRect(x,y,360,440,560,h)){state="title"}
+let w=400
+let h=80
+let x0=canvas.width/2-w/2
+if(inRect(x,y,x0,200,w,h)) state="game"
+if(inRect(x,y,x0,300,w,h)){reset();state="game"}
+if(inRect(x,y,x0,400,w,h)) state="title"
 }
 
 else if(state==="gameover"){
-if(inRect(x,y,440,420,400,80)){reset();state="game"}
-if(inRect(x,y,440,530,400,80)){state="title"}
+if(inRect(x,y,canvas.width/2-200,350,400,70)){reset();state="game"}
+if(inRect(x,y,canvas.width/2-200,440,400,70)) state="title"
 }
 }
 
@@ -159,50 +156,41 @@ if(state!=="game")return
 
 time++
 
-// 重力
 chicken.vy+=0.8
 chicken.y+=chicken.vy
 
-if(chicken.y>560){
-chicken.y=560
+if(chicken.y>canvas.height-120){
+chicken.y=canvas.height-120
 chicken.vy=0
 chicken.jumpCount=0
 }
 
-// スピード
 speed=baseSpeed+score*0.005
 if(speed>maxSpeed)speed=maxSpeed
 
-// ===== サボテン生成（間隔あり）=====
 spawnTimer++
 if(spawnTimer>spawnInterval){
 spawnTimer=0
-
 let h=40+Math.random()*60
-
 obstacles.push({
-x:1280,
-y:600-h,
+x:canvas.width,
+y:canvas.height-120-h,
 w:30,
 h:h
 })
-
-// 間隔ランダム
 spawnInterval=80+Math.random()*40
 }
 
-// 移動＆当たり判定
 obstacles.forEach(o=>{
 o.x-=speed
 
 if(
 chicken.x < o.x + o.w &&
-chicken.x + 50 > o.x &&
+chicken.x + 40 > o.x &&
 chicken.y < o.y + o.h &&
-chicken.y + 50 > o.y
+chicken.y + 40 > o.y
 ){
 state="gameover"
-
 if(score>highScore){
 highScore=score
 localStorage.setItem("high",highScore)
@@ -211,114 +199,90 @@ localStorage.setItem("high",highScore)
 })
 
 obstacles=obstacles.filter(o=>o.x>-50)
-
 score++
 }
 
 // ===== 描画 =====
 function draw(){
 
-ctx.clearRect(0,0,1280,720)
+ctx.clearRect(0,0,canvas.width,canvas.height)
 
-// ===== 朝昼夜 =====
+// 朝昼夜
 let phase=time%2700
-
-if(phase<900){
-ctx.fillStyle="#87CEEB"
-}else if(phase<1800){
-ctx.fillStyle="#4FC3F7"
-}else{
-ctx.fillStyle="#0B1A3C"
-}
-ctx.fillRect(0,0,1280,720)
-
-// 太陽・月
-ctx.beginPath()
-ctx.arc(1000,80,30,0,Math.PI*2)
-ctx.fillStyle=phase<1800?"yellow":"white"
-ctx.fill()
+ctx.fillStyle=phase<900?"#87CEEB":phase<1800?"#4FC3F7":"#0B1A3C"
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
 // 地面
 ctx.fillStyle="#8B4513"
-ctx.fillRect(0,600,1280,120)
+ctx.fillRect(0,canvas.height-120,canvas.width,120)
 
-// ===== タイトル =====
+// タイトル
 if(state==="title"){
 ctx.fillStyle="black"
 ctx.textAlign="center"
-ctx.font="70px JK"
-ctx.fillText("🐔 ちきんゲーム",640,200)
+ctx.font="40px JK"
+ctx.fillText("🐔 ちきんゲーム",canvas.width/2,200)
 
-drawBtn(440,350,400,80,"EASY")
-drawBtn(440,460,400,80,"NORMAL")
-drawBtn(440,570,400,80,"HARD")
+drawBtn(canvas.width/2-200,300,400,70,"EASY")
+drawBtn(canvas.width/2-200,390,400,70,"NORMAL")
+drawBtn(canvas.width/2-200,480,400,70,"HARD")
 }
 
-// ===== ゲーム =====
+// ゲーム
 if(state==="game"){
+ctx.font="40px JK"
+ctx.fillText("🐔",chicken.x,chicken.y)
 
-// ニワトリ
-ctx.font="50px JK"
-ctx.fillText("🐔",chicken.x,chicken.y+40)
-
-// サボテン
 obstacles.forEach(o=>{
 ctx.fillStyle="green"
 ctx.fillRect(o.x,o.y,o.w,o.h)
-ctx.fillRect(o.x-10,o.y+20,10,30)
-ctx.fillRect(o.x+o.w,o.y+30,10,30)
 })
 
-// スコア
 ctx.fillStyle=phase<1800?"black":"white"
-ctx.textAlign="left"
-ctx.font="35px JK"
-ctx.fillText("Score: "+score,20,50)
-ctx.fillText("High: "+highScore,20,90)
+ctx.font="20px JK"
+ctx.fillText("Score:"+score,20,30)
+ctx.fillText("High:"+highScore,20,60)
 
-drawBtn(1100,20,140,60,"☰")
+drawBtn(canvas.width-150,20,130,50,"☰")
 }
 
-// ===== メニュー =====
+// メニュー
 if(state==="menu"){
-ctx.fillStyle="rgba(0,0,0,0.7)"
-ctx.fillRect(0,0,1280,720)
+ctx.fillStyle="rgba(0,0,0,0.6)"
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
-drawBtn(360,200,560,120,"再開")
-drawBtn(360,320,560,120,"リスタート")
-drawBtn(360,440,560,120,"タイトル")
+drawBtn(canvas.width/2-200,200,400,80,"再開")
+drawBtn(canvas.width/2-200,300,400,80,"リスタート")
+drawBtn(canvas.width/2-200,400,400,80,"タイトル")
 }
 
-// ===== ゲームオーバー =====
+// ゲームオーバー
 if(state==="gameover"){
 ctx.fillStyle="black"
-ctx.fillRect(0,0,1280,720)
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
 ctx.fillStyle="white"
 ctx.textAlign="center"
-ctx.font="60px JK"
-ctx.fillText("GAME OVER",640,260)
-
 ctx.font="40px JK"
-ctx.fillText("Score "+score,640,330)
+ctx.fillText("GAME OVER",canvas.width/2,200)
+ctx.fillText("Score "+score,canvas.width/2,260)
 
-drawBtn(440,420,400,80,"RESTART")
-drawBtn(440,530,400,80,"TITLE")
+drawBtn(canvas.width/2-200,350,400,70,"RESTART")
+drawBtn(canvas.width/2-200,440,400,70,"TITLE")
 }
 }
 
-// ===== ボタン =====
+// ボタン
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
-
 ctx.fillStyle="black"
-ctx.font="35px JK"
 ctx.textAlign="center"
-ctx.fillText(text,x+w/2,y+h/2+10)
+ctx.font="20px JK"
+ctx.fillText(text,x+w/2,y+h/2+7)
 }
 
-// ===== ループ =====
+// ループ
 function loop(){
 update()
 draw()
