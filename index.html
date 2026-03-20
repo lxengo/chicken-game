@@ -56,18 +56,29 @@ let chicken, obstacles=[]
 let score=0
 let highScore=localStorage.getItem("high")||0
 
+let baseSpeed=7
+let speed=7
+let maxSpeed=15
+
 let lastTap=0
 const delay=250
+
+let time=0
 
 // ===== 初期化 =====
 function reset(){
 chicken={x:200,y:560,vy:0,jump:0}
 obstacles=[]
 score=0
+time=0
 }
 
 // ===== スタート =====
-function start(){
+function start(mode){
+if(mode==="easy"){baseSpeed=5;maxSpeed=10}
+else if(mode==="hard"){baseSpeed=9;maxSpeed=18}
+else{baseSpeed=7;maxSpeed=15}
+
 reset()
 state="game"
 }
@@ -106,16 +117,14 @@ chicken.jump=1
 lastTap=now
 }
 
-// ===== 入力（完全版）=====
+// ===== 入力 =====
 canvas.addEventListener("pointerdown", e=>{
 e.preventDefault()
 
 let p=getPos(e)
 
-// ① ボタン処理
 handleClick(p.x,p.y)
 
-// ② ゲーム中だけジャンプ
 if(state==="game"){
 jump()
 }
@@ -125,7 +134,9 @@ jump()
 function handleClick(x,y){
 
 if(state==="title"){
-if(inRect(x,y,440,350,400,80)) start()
+if(inRect(x,y,440,350,400,80)) start("easy")
+if(inRect(x,y,440,460,400,80)) start("normal")
+if(inRect(x,y,440,570,400,80)) start("hard")
 }
 
 else if(state==="game"){
@@ -136,7 +147,6 @@ state="menu"
 
 else if(state==="menu"){
 let h=120
-
 if(inRect(x,y,360,200,560,h)){state="game"}
 if(inRect(x,y,360,320,560,h)){reset();state="game"}
 if(inRect(x,y,360,440,560,h)){state="title"}
@@ -152,6 +162,8 @@ if(inRect(x,y,440,530,400,80)){state="title"}
 function update(){
 if(state!=="game")return
 
+time++
+
 chicken.vy+=0.8
 chicken.y+=chicken.vy
 
@@ -161,7 +173,40 @@ chicken.vy=0
 chicken.jump=0
 }
 
-obstacles.forEach(o=>o.x-=7)
+// スピード
+speed=baseSpeed+score*0.005
+if(speed>maxSpeed)speed=maxSpeed
+
+// ===== サボテン生成（ここ重要）=====
+if(Math.random()<0.02){
+let h=40+Math.random()*60
+obstacles.push({
+x:1280,
+y:600-h,
+w:30,
+h:h
+})
+}
+
+// 移動＆当たり判定
+obstacles.forEach(o=>{
+o.x-=speed
+
+if(
+chicken.x < o.x + o.w &&
+chicken.x + 50 > o.x &&
+chicken.y < o.y + o.h &&
+chicken.y + 50 > o.y
+){
+state="gameover"
+
+if(score>highScore){
+highScore=score
+localStorage.setItem("high",highScore)
+}
+}
+})
+
 obstacles=obstacles.filter(o=>o.x>-50)
 
 score++
@@ -172,35 +217,64 @@ function draw(){
 
 ctx.clearRect(0,0,1280,720)
 
-if(state==="title"){
+// ===== 朝昼夜 =====
+let phase=time%2700
+
+if(phase<900){
 ctx.fillStyle="#87CEEB"
-ctx.fillRect(0,0,1280,720)
-
-ctx.fillStyle="black"
-ctx.font="60px JK"
-ctx.textAlign="center"
-ctx.fillText("ちきんゲーム",640,200)
-
-drawBtn(440,350,400,80,"START")
+}else if(phase<1800){
+ctx.fillStyle="#4FC3F7"
+}else{
+ctx.fillStyle="#0B1A3C"
 }
-
-if(state==="game"){
-ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
 
+// ===== 太陽・月 =====
+ctx.beginPath()
+ctx.arc(1000,80,30,0,Math.PI*2)
+ctx.fillStyle=phase<1800?"yellow":"white"
+ctx.fill()
+
+// ===== 地面 =====
 ctx.fillStyle="#8B4513"
 ctx.fillRect(0,600,1280,120)
 
+// ===== タイトル =====
+if(state==="title"){
+ctx.fillStyle="black"
+ctx.textAlign="center"
+ctx.font="70px JK"
+ctx.fillText("🐔 ちきんゲーム",640,200)
+
+drawBtn(440,350,400,80,"EASY")
+drawBtn(440,460,400,80,"NORMAL")
+drawBtn(440,570,400,80,"HARD")
+}
+
+// ===== ゲーム =====
+if(state==="game"){
 ctx.font="50px JK"
 ctx.fillText("🐔",chicken.x,chicken.y+40)
 
-ctx.fillStyle="black"
-ctx.font="40px JK"
-ctx.fillText("Score "+score,40,60)
+// サボテン描画
+obstacles.forEach(o=>{
+ctx.fillStyle="green"
+ctx.fillRect(o.x,o.y,o.w,o.h)
+ctx.fillRect(o.x-10,o.y+20,10,30)
+ctx.fillRect(o.x+o.w,o.y+30,10,30)
+})
+
+// スコア（見切れ防止）
+ctx.fillStyle=phase<1800?"black":"white"
+ctx.textAlign="left"
+ctx.font="35px JK"
+ctx.fillText("Score: "+score,20,50)
+ctx.fillText("High: "+highScore,20,90)
 
 drawBtn(1100,20,140,60,"☰")
 }
 
+// ===== メニュー =====
 if(state==="menu"){
 ctx.fillStyle="rgba(0,0,0,0.7)"
 ctx.fillRect(0,0,1280,720)
@@ -210,14 +284,18 @@ drawBtn(360,320,560,120,"リスタート")
 drawBtn(360,440,560,120,"タイトル")
 }
 
+// ===== ゲームオーバー =====
 if(state==="gameover"){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,1280,720)
 
 ctx.fillStyle="white"
-ctx.font="60px JK"
 ctx.textAlign="center"
+ctx.font="60px JK"
 ctx.fillText("GAME OVER",640,260)
+
+ctx.font="40px JK"
+ctx.fillText("Score "+score,640,330)
 
 drawBtn(440,420,400,80,"RESTART")
 drawBtn(440,530,400,80,"TITLE")
