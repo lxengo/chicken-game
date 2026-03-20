@@ -34,7 +34,6 @@ overflow:hidden;
 canvas{
 width:100%;
 height:100%;
-touch-action:none;
 }
 </style>
 </head>
@@ -62,14 +61,13 @@ let maxSpeed=15
 let chicken,obstacles=[]
 
 let time=0
-let clouds=[]
-let stars=[]
 
 let lastTap=0
 let ignoreTapUntil=0
 let inputDelay=0
 const delay=250
 
+// ===== ジャンプ（どこ押してもOK）=====
 function tap(){
 if(state!=="game") return
 if(Date.now()<ignoreTapUntil) return
@@ -90,16 +88,20 @@ chicken.jump=1
 lastTap=now
 }
 
+// 👉 画面全体でジャンプ
+document.addEventListener("touchstart",tap)
+document.addEventListener("mousedown",tap)
+
+// ===== 初期化 =====
 function reset(){
 chicken={x:200,y:560,vy:0,jump:0}
 obstacles=[]
 score=0
 speed=baseSpeed
 time=0
-clouds=[]
-stars=[]
 }
 
+// ===== 難易度 =====
 function start(d){
 if(d=="easy"){baseSpeed=5;maxSpeed=10}
 else if(d=="hard"){baseSpeed=9;maxSpeed=18}
@@ -108,9 +110,10 @@ else{baseSpeed=7;maxSpeed=15}
 reset()
 state="game"
 ignoreTapUntil=Date.now()+200
-inputDelay=20
+inputDelay=0
 }
 
+// ===== 座標 =====
 function getPos(e){
 const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
@@ -133,33 +136,19 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// 障害物
+// ===== サボテン（ちゃんとした形）=====
 setInterval(()=>{
 if(state=="game"){
-let h=40+Math.random()*60
-obstacles.push({x:1280,y:600-h,w:30,h:h})
+let h=60
+obstacles.push({x:1280,y:600-h})
 }
 },1200)
 
-// 雲・星
-setInterval(()=>{
-if(state=="game"){
-let phase=time%2700
-
-if(phase>=900 && phase<1800){
-clouds.push({x:1280,y:50+Math.random()*200,size:40})
-}
-if(phase>=1800){
-stars.push({x:1280,y:Math.random()*400,size:3})
-}
-}
-},800)
-
+// ===== 更新 =====
 function update(){
 if(state!="game")return
 
 time++
-if(inputDelay>0) inputDelay--
 
 chicken.vy+=0.8
 chicken.y+=chicken.vy
@@ -176,10 +165,11 @@ if(speed>maxSpeed)speed=maxSpeed
 obstacles.forEach(o=>{
 o.x-=speed
 
+// 当たり判定
 if(
-chicken.x < o.x + o.w &&
+chicken.x < o.x + 40 &&
 chicken.x + 50 > o.x &&
-chicken.y < o.y + o.h &&
+chicken.y < o.y + 80 &&
 chicken.y + 50 > o.y
 ){
 state="gameover"
@@ -192,13 +182,11 @@ localStorage.setItem("high",highScore)
 }
 })
 
-clouds.forEach(c=>c.x-=2)
-stars.forEach(s=>s.x-=4)
-
 obstacles=obstacles.filter(o=>o.x>-50)
 score++
 }
 
+// ===== ボタン =====
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
@@ -209,6 +197,7 @@ ctx.textAlign="center"
 ctx.fillText(text,x+w/2,y+h/2+10)
 }
 
+// ===== タイトル =====
 function drawTitle(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
@@ -224,37 +213,40 @@ drawBtn(440,460,400,80,"NORMAL")
 drawBtn(440,570,400,80,"HARD")
 }
 
+// ===== ゲーム =====
 function drawGame(){
 
-let phase=time%2700
-
-ctx.fillStyle=phase<900?"#87CEEB":phase<1800?"#4FC3F7":"#0B1A3C"
+ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
-
-ctx.beginPath()
-ctx.arc(1000,80,30,0,Math.PI*2)
-ctx.fillStyle=phase<1800?"yellow":"white"
-ctx.fill()
 
 ctx.fillStyle="#8B4513"
 ctx.fillRect(0,600,1280,120)
 
+// ニワトリ
 ctx.font="50px JK"
 ctx.fillText("🐔",chicken.x,chicken.y+40)
 
+// サボテン（それっぽい）
 obstacles.forEach(o=>{
 ctx.fillStyle="green"
-ctx.fillRect(o.x,o.y,o.w,o.h)
+
+// 本体
+ctx.fillRect(o.x,o.y,20,60)
+
+// 左枝
+ctx.fillRect(o.x-10,o.y+20,10,20)
+
+// 右枝
+ctx.fillRect(o.x+20,o.y+30,10,20)
 })
 
-ctx.fillStyle=phase<1800?"black":"white"
-ctx.textAlign="left"
+ctx.fillStyle="black"
 ctx.font="40px JK"
-
 ctx.fillText("Score "+score,40,60)
 ctx.fillText("High "+highScore,40,110)
 }
 
+// ===== ゲームオーバー =====
 function drawGameOver(){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,1280,720)
@@ -269,21 +261,19 @@ drawBtn(440,400,400,80,"RESTART")
 drawBtn(440,510,400,80,"TITLE")
 }
 
+// ===== クリック =====
+canvas.addEventListener("click",e=>{
+let p=getPos(e)
+handleClick(p.x,p.y)
+})
+
 canvas.addEventListener("touchstart",e=>{
 let p=getPos(e)
 handleClick(p.x,p.y)
-tap()
-})
-
-canvas.addEventListener("mousedown",e=>{
-let p=getPos(e)
-handleClick(p.x,p.y)
-tap()
 })
 
 function handleClick(x,y){
 
-if(inputDelay>0) return
 if(Date.now()<ignoreTapUntil) return
 
 if(state=="title"){
@@ -294,10 +284,14 @@ if(inRect(x,y,440,570,400,80))start("hard")
 
 else if(state=="gameover"){
 if(inRect(x,y,440,400,400,80)){reset();state="game"}
-if(inRect(x,y,440,510,400,80)){state="title";inputDelay=20}
+if(inRect(x,y,440,510,400,80)){
+state="title"
+inputDelay=0
+}
 }
 }
 
+// ===== ループ =====
 function loop(){
 update()
 
