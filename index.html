@@ -65,12 +65,17 @@ const delay=250
 
 let time=0
 
+// サボテン間隔
+let spawnTimer=0
+let spawnInterval=100
+
 // ===== 初期化 =====
 function reset(){
-chicken={x:200,y:560,vy:0,jump:0}
+chicken={x:200,y:560,vy:0,jumpCount:0}
 obstacles=[]
 score=0
 time=0
+spawnTimer=0
 }
 
 // ===== スタート =====
@@ -99,22 +104,12 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// ===== ジャンプ =====
+// ===== ジャンプ（2段）=====
 function jump(){
-let now=Date.now()
-
-if(now-lastTap<delay){
-if(chicken.jump<2){
-chicken.vy=-18
-chicken.jump=2
-}
-}else{
-if(chicken.jump===0){
+if(chicken.jumpCount<2){
 chicken.vy=-16
-chicken.jump=1
+chicken.jumpCount++
 }
-}
-lastTap=now
 }
 
 // ===== 入力 =====
@@ -164,28 +159,36 @@ if(state!=="game")return
 
 time++
 
+// 重力
 chicken.vy+=0.8
 chicken.y+=chicken.vy
 
 if(chicken.y>560){
 chicken.y=560
 chicken.vy=0
-chicken.jump=0
+chicken.jumpCount=0
 }
 
 // スピード
 speed=baseSpeed+score*0.005
 if(speed>maxSpeed)speed=maxSpeed
 
-// ===== サボテン生成（ここ重要）=====
-if(Math.random()<0.02){
+// ===== サボテン生成（間隔あり）=====
+spawnTimer++
+if(spawnTimer>spawnInterval){
+spawnTimer=0
+
 let h=40+Math.random()*60
+
 obstacles.push({
 x:1280,
 y:600-h,
 w:30,
 h:h
 })
+
+// 間隔ランダム
+spawnInterval=80+Math.random()*40
 }
 
 // 移動＆当たり判定
@@ -229,13 +232,13 @@ ctx.fillStyle="#0B1A3C"
 }
 ctx.fillRect(0,0,1280,720)
 
-// ===== 太陽・月 =====
+// 太陽・月
 ctx.beginPath()
 ctx.arc(1000,80,30,0,Math.PI*2)
 ctx.fillStyle=phase<1800?"yellow":"white"
 ctx.fill()
 
-// ===== 地面 =====
+// 地面
 ctx.fillStyle="#8B4513"
 ctx.fillRect(0,600,1280,120)
 
@@ -253,10 +256,12 @@ drawBtn(440,570,400,80,"HARD")
 
 // ===== ゲーム =====
 if(state==="game"){
+
+// ニワトリ
 ctx.font="50px JK"
 ctx.fillText("🐔",chicken.x,chicken.y+40)
 
-// サボテン描画
+// サボテン
 obstacles.forEach(o=>{
 ctx.fillStyle="green"
 ctx.fillRect(o.x,o.y,o.w,o.h)
@@ -264,7 +269,7 @@ ctx.fillRect(o.x-10,o.y+20,10,30)
 ctx.fillRect(o.x+o.w,o.y+30,10,30)
 })
 
-// スコア（見切れ防止）
+// スコア
 ctx.fillStyle=phase<1800?"black":"white"
 ctx.textAlign="left"
 ctx.font="35px JK"
@@ -313,4 +318,13 @@ ctx.textAlign="center"
 ctx.fillText(text,x+w/2,y+h/2+10)
 }
 
-// ===== ループ ==
+// ===== ループ =====
+function loop(){
+update()
+draw()
+requestAnimationFrame(loop)
+}
+loop()
+</script>
+</body>
+</html>
