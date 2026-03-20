@@ -78,16 +78,9 @@ const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
 const sy=canvas.height/r.height
 
-if(e.touches){
-return{
-x:(e.touches[0].clientX-r.left)*sx,
-y:(e.touches[0].clientY-r.top)*sy
-}
-}else{
 return{
 x:(e.clientX-r.left)*sx,
 y:(e.clientY-r.top)*sy
-}
 }
 }
 
@@ -95,7 +88,7 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// ===== ジャンプ（完全分離）=====
+// ===== ジャンプ =====
 function jump(){
 let now=Date.now()
 
@@ -113,19 +106,20 @@ chicken.jump=1
 lastTap=now
 }
 
-// ===== 入力 =====
-canvas.addEventListener("touchstart",handleInput)
-canvas.addEventListener("mousedown",handleInput)
+// ===== 入力（完全版）=====
+canvas.addEventListener("pointerdown", e=>{
+e.preventDefault()
 
-function handleInput(e){
 let p=getPos(e)
 
-if(state==="game"){
-jump()  // ←ゲーム中だけ
-}
-
+// ① ボタン処理
 handleClick(p.x,p.y)
+
+// ② ゲーム中だけジャンプ
+if(state==="game"){
+jump()
 }
+})
 
 // ===== クリック処理 =====
 function handleClick(x,y){
@@ -168,7 +162,6 @@ chicken.jump=0
 }
 
 obstacles.forEach(o=>o.x-=7)
-
 obstacles=obstacles.filter(o=>o.x>-50)
 
 score++
