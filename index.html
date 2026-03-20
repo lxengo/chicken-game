@@ -6,6 +6,10 @@
 
 <title>ちきんゲーム</title>
 
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+
 <style>
 @font-face{
 font-family:"JK";
@@ -50,10 +54,17 @@ const ctx=canvas.getContext("2d")
 
 function resizeCanvas(){
 const box=document.getElementById("gameBox")
+if(box.clientWidth===0 || box.clientHeight===0) return
 canvas.width=box.clientWidth
 canvas.height=box.clientHeight
 }
+
+// 初期化タイミング修正
+window.addEventListener("load", ()=>{
 resizeCanvas()
+reset()
+})
+
 window.addEventListener("resize",resizeCanvas)
 
 let state="title"
@@ -74,7 +85,12 @@ let spawnInterval=100
 
 // ===== 初期化 =====
 function reset(){
-chicken={x:100,y:canvas.height-120,vy:0,jumpCount:0}
+chicken={
+x:100,
+y:canvas.height-140,
+vy:0,
+jumpCount:0
+}
 obstacles=[]
 score=0
 time=0
@@ -171,13 +187,16 @@ if(speed>maxSpeed)speed=maxSpeed
 spawnTimer++
 if(spawnTimer>spawnInterval){
 spawnTimer=0
+
 let h=40+Math.random()*60
+
 obstacles.push({
 x:canvas.width,
 y:canvas.height-120-h,
 w:30,
 h:h
 })
+
 spawnInterval=80+Math.random()*40
 }
 
@@ -191,6 +210,7 @@ chicken.y < o.y + o.h &&
 chicken.y + 40 > o.y
 ){
 state="gameover"
+
 if(score>highScore){
 highScore=score
 localStorage.setItem("high",highScore)
@@ -212,11 +232,17 @@ let phase=time%2700
 ctx.fillStyle=phase<900?"#87CEEB":phase<1800?"#4FC3F7":"#0B1A3C"
 ctx.fillRect(0,0,canvas.width,canvas.height)
 
+// 太陽/月
+ctx.beginPath()
+ctx.arc(canvas.width-80,60,25,0,Math.PI*2)
+ctx.fillStyle=phase<1800?"yellow":"white"
+ctx.fill()
+
 // 地面
 ctx.fillStyle="#8B4513"
 ctx.fillRect(0,canvas.height-120,canvas.width,120)
 
-// タイトル
+// ===== タイトル =====
 if(state==="title"){
 ctx.fillStyle="black"
 ctx.textAlign="center"
@@ -228,7 +254,7 @@ drawBtn(canvas.width/2-200,390,400,70,"NORMAL")
 drawBtn(canvas.width/2-200,480,400,70,"HARD")
 }
 
-// ゲーム
+// ===== ゲーム =====
 if(state==="game"){
 ctx.font="40px JK"
 ctx.fillText("🐔",chicken.x,chicken.y)
@@ -246,7 +272,7 @@ ctx.fillText("High:"+highScore,20,60)
 drawBtn(canvas.width-150,20,130,50,"☰")
 }
 
-// メニュー
+// ===== メニュー =====
 if(state==="menu"){
 ctx.fillStyle="rgba(0,0,0,0.6)"
 ctx.fillRect(0,0,canvas.width,canvas.height)
@@ -256,7 +282,7 @@ drawBtn(canvas.width/2-200,300,400,80,"リスタート")
 drawBtn(canvas.width/2-200,400,400,80,"タイトル")
 }
 
-// ゲームオーバー
+// ===== ゲームオーバー =====
 if(state==="gameover"){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,canvas.width,canvas.height)
@@ -284,11 +310,17 @@ ctx.fillText(text,x+w/2,y+h/2+7)
 
 // ループ
 function loop(){
+resizeCanvas()
 update()
 draw()
 requestAnimationFrame(loop)
 }
 loop()
+
+// ===== Service Worker登録 =====
+if("serviceWorker" in navigator){
+navigator.serviceWorker.register("./sw.js")
+}
 </script>
 </body>
 </html>
