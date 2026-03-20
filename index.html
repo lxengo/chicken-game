@@ -60,8 +60,6 @@ let maxSpeed=15
 
 let chicken,obstacles=[]
 
-let time=0
-
 let lastTap=0
 let ignoreTapUntil=0
 const delay=250
@@ -87,7 +85,6 @@ chicken.jump=1
 lastTap=now
 }
 
-// 👉 どこ押してもジャンプ
 document.addEventListener("touchstart",tap)
 document.addEventListener("mousedown",tap)
 
@@ -97,10 +94,9 @@ chicken={x:200,y:560,vy:0,jump:0}
 obstacles=[]
 score=0
 speed=baseSpeed
-time=0
 }
 
-// ===== 難易度 =====
+// ===== 難易度開始 =====
 function start(d){
 if(Date.now()<ignoreTapUntil) return
 
@@ -110,7 +106,9 @@ else{baseSpeed=7;maxSpeed=15}
 
 reset()
 state="game"
-ignoreTapUntil=Date.now()+300
+
+// ★ タップ暴発完全防止
+ignoreTapUntil=Date.now()+500
 }
 
 // ===== 座標 =====
@@ -147,8 +145,6 @@ obstacles.push({x:1280,y:540})
 function update(){
 if(state!="game")return
 
-time++
-
 chicken.vy+=0.8
 chicken.y+=chicken.vy
 
@@ -171,7 +167,7 @@ chicken.y < o.y + 80 &&
 chicken.y + 50 > o.y
 ){
 state="gameover"
-ignoreTapUntil=Date.now()+400
+ignoreTapUntil=Date.now()+500
 
 if(score>highScore){
 highScore=score
@@ -224,27 +220,21 @@ ctx.fillRect(0,600,1280,120)
 ctx.font="50px JK"
 ctx.fillText("🐔",chicken.x,chicken.y+40)
 
-// サボテン（改善版）
+// サボテン
 obstacles.forEach(o=>{
 ctx.fillStyle="green"
-
-// 本体
 ctx.fillRect(o.x,o.y,20,60)
-
-// 左枝
 ctx.fillRect(o.x-10,o.y+20,10,20)
-
-// 右枝
 ctx.fillRect(o.x+20,o.y+30,10,20)
 })
 
-// 👇 見切れ防止位置
+// ★ 見切れ完全対策
+ctx.textAlign="right"
+ctx.font="32px JK"
 ctx.fillStyle="black"
-ctx.textAlign="left"
-ctx.font="40px JK"
 
-ctx.fillText("Score "+score,60,80)
-ctx.fillText("High "+highScore,60,140)
+ctx.fillText("Score "+score,1220,80)
+ctx.fillText("High "+highScore,1220,130)
 }
 
 // ===== ゲームオーバー =====
@@ -288,8 +278,8 @@ if(inRect(x,y,440,400,400,80)){reset();state="game"}
 if(inRect(x,y,440,510,400,80)){
 state="title"
 
-// 👇 暴発防止
-ignoreTapUntil=Date.now()+400
+// ★ 完全防止
+ignoreTapUntil=Date.now()+600
 }
 }
 }
