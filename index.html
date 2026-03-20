@@ -6,9 +6,6 @@
 
 <title>ちきんゲーム</title>
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-
 <style>
 @font-face{
 font-family:"JK";
@@ -65,6 +62,7 @@ reset()
 
 window.addEventListener("resize",resizeCanvas)
 
+// ===== 状態 =====
 let state="title"
 let chicken, obstacles=[]
 let score=0
@@ -82,7 +80,7 @@ let spawnInterval=100
 function reset(){
 chicken={
 x:canvas.width*0.15,
-y:canvas.height-140,
+y:canvas.height-120,
 vy:0,
 jumpCount:0
 }
@@ -102,6 +100,21 @@ reset()
 state="game"
 }
 
+// ===== 入力 =====
+canvas.addEventListener("pointerdown", e=>{
+e.preventDefault()
+let p=getPos(e)
+
+handleClick(p.x,p.y)
+
+if(state==="game"){
+if(chicken.jumpCount<2){
+chicken.vy=-16
+chicken.jumpCount++
+}
+}
+})
+
 // ===== 座標 =====
 function getPos(e){
 const r=canvas.getBoundingClientRect()
@@ -117,34 +130,16 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// ===== ジャンプ =====
-function jump(){
-if(chicken.jumpCount<2){
-chicken.vy=-16
-chicken.jumpCount++
-}
-}
-
-// ===== 入力 =====
-canvas.addEventListener("pointerdown", e=>{
-e.preventDefault()
-let p=getPos(e)
-
-handleClick(p.x,p.y)
-
-if(state==="game") jump()
-})
-
-// ===== クリック処理 =====
+// ===== クリック =====
 function handleClick(x,y){
 
 let cx=canvas.width/2
 let w=canvas.width*0.4
 
 if(state==="title"){
-if(inRect(x,y,cx-w/2,canvas.height*0.45,w,60)) start("easy")
-if(inRect(x,y,cx-w/2,canvas.height*0.55,w,60)) start("normal")
-if(inRect(x,y,cx-w/2,canvas.height*0.65,w,60)) start("hard")
+if(inRect(x,y,cx-w/2,canvas.height*0.5,w,60)) start("easy")
+if(inRect(x,y,cx-w/2,canvas.height*0.6,w,60)) start("normal")
+if(inRect(x,y,cx-w/2,canvas.height*0.7,w,60)) start("hard")
 }
 
 else if(state==="game"){
@@ -224,22 +219,12 @@ function draw(){
 
 ctx.clearRect(0,0,canvas.width,canvas.height)
 
-let phase=time%2700
-ctx.fillStyle=phase<900?"#87CEEB":phase<1800?"#4FC3F7":"#0B1A3C"
-ctx.fillRect(0,0,canvas.width,canvas.height)
-
-// 太陽/月
-ctx.beginPath()
-ctx.arc(canvas.width-70,60,20,0,Math.PI*2)
-ctx.fillStyle=phase<1800?"yellow":"white"
-ctx.fill()
-
-// 地面
-ctx.fillStyle="#8B4513"
-ctx.fillRect(0,canvas.height-120,canvas.width,120)
-
 // ===== タイトル =====
 if(state==="title"){
+
+ctx.fillStyle="#87CEEB"
+ctx.fillRect(0,0,canvas.width,canvas.height)
+
 ctx.fillStyle="black"
 ctx.textAlign="center"
 ctx.textBaseline="middle"
@@ -250,10 +235,21 @@ ctx.fillText("🐔 ちきんゲーム",canvas.width/2,canvas.height*0.3)
 let cx=canvas.width/2
 let w=canvas.width*0.4
 
-drawBtn(cx-w/2,canvas.height*0.45,w,60,"EASY")
-drawBtn(cx-w/2,canvas.height*0.55,w,60,"NORMAL")
-drawBtn(cx-w/2,canvas.height*0.65,w,60,"HARD")
+drawBtn(cx-w/2,canvas.height*0.5,w,60,"EASY")
+drawBtn(cx-w/2,canvas.height*0.6,w,60,"NORMAL")
+drawBtn(cx-w/2,canvas.height*0.7,w,60,"HARD")
+
+return
 }
+
+// ===== ゲーム背景 =====
+let phase=time%2700
+ctx.fillStyle=phase<900?"#87CEEB":phase<1800?"#4FC3F7":"#0B1A3C"
+ctx.fillRect(0,0,canvas.width,canvas.height)
+
+// 地面
+ctx.fillStyle="#8B4513"
+ctx.fillRect(0,canvas.height-120,canvas.width,120)
 
 // ===== ゲーム =====
 if(state==="game"){
@@ -265,8 +261,7 @@ ctx.fillStyle="green"
 ctx.fillRect(o.x,o.y,o.w,o.h)
 })
 
-// スコア（見切れ防止）
-ctx.fillStyle=phase<1800?"black":"white"
+ctx.fillStyle="black"
 ctx.textAlign="left"
 ctx.font="20px JK"
 ctx.fillText("Score: "+score,20,30)
@@ -326,11 +321,6 @@ draw()
 requestAnimationFrame(loop)
 }
 loop()
-
-// PWA
-if("serviceWorker" in navigator){
-navigator.serviceWorker.register("./sw.js")
-}
 </script>
 </body>
 </html>
