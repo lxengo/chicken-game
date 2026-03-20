@@ -64,10 +64,9 @@ let time=0
 
 let lastTap=0
 let ignoreTapUntil=0
-let inputDelay=0
 const delay=250
 
-// ===== ジャンプ（どこ押してもOK）=====
+// ===== ジャンプ =====
 function tap(){
 if(state!=="game") return
 if(Date.now()<ignoreTapUntil) return
@@ -88,7 +87,7 @@ chicken.jump=1
 lastTap=now
 }
 
-// 👉 画面全体でジャンプ
+// 👉 どこ押してもジャンプ
 document.addEventListener("touchstart",tap)
 document.addEventListener("mousedown",tap)
 
@@ -103,14 +102,15 @@ time=0
 
 // ===== 難易度 =====
 function start(d){
+if(Date.now()<ignoreTapUntil) return
+
 if(d=="easy"){baseSpeed=5;maxSpeed=10}
 else if(d=="hard"){baseSpeed=9;maxSpeed=18}
 else{baseSpeed=7;maxSpeed=15}
 
 reset()
 state="game"
-ignoreTapUntil=Date.now()+200
-inputDelay=0
+ignoreTapUntil=Date.now()+300
 }
 
 // ===== 座標 =====
@@ -136,11 +136,10 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// ===== サボテン（ちゃんとした形）=====
+// ===== サボテン =====
 setInterval(()=>{
 if(state=="game"){
-let h=60
-obstacles.push({x:1280,y:600-h})
+obstacles.push({x:1280,y:540})
 }
 },1200)
 
@@ -165,7 +164,6 @@ if(speed>maxSpeed)speed=maxSpeed
 obstacles.forEach(o=>{
 o.x-=speed
 
-// 当たり判定
 if(
 chicken.x < o.x + 40 &&
 chicken.x + 50 > o.x &&
@@ -173,7 +171,7 @@ chicken.y < o.y + 80 &&
 chicken.y + 50 > o.y
 ){
 state="gameover"
-ignoreTapUntil=Date.now()+300
+ignoreTapUntil=Date.now()+400
 
 if(score>highScore){
 highScore=score
@@ -226,7 +224,7 @@ ctx.fillRect(0,600,1280,120)
 ctx.font="50px JK"
 ctx.fillText("🐔",chicken.x,chicken.y+40)
 
-// サボテン（それっぽい）
+// サボテン（改善版）
 obstacles.forEach(o=>{
 ctx.fillStyle="green"
 
@@ -240,10 +238,13 @@ ctx.fillRect(o.x-10,o.y+20,10,20)
 ctx.fillRect(o.x+20,o.y+30,10,20)
 })
 
+// 👇 見切れ防止位置
 ctx.fillStyle="black"
+ctx.textAlign="left"
 ctx.font="40px JK"
-ctx.fillText("Score "+score,40,60)
-ctx.fillText("High "+highScore,40,110)
+
+ctx.fillText("Score "+score,60,80)
+ctx.fillText("High "+highScore,60,140)
 }
 
 // ===== ゲームオーバー =====
@@ -286,7 +287,9 @@ else if(state=="gameover"){
 if(inRect(x,y,440,400,400,80)){reset();state="game"}
 if(inRect(x,y,440,510,400,80)){
 state="title"
-inputDelay=0
+
+// 👇 暴発防止
+ignoreTapUntil=Date.now()+400
 }
 }
 }
