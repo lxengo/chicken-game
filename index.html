@@ -49,51 +49,70 @@ let chicken, obstacles=[]
 let score=0
 let highScore=localStorage.getItem("high")||0
 
+let speed=6
 let lastTap=0
 const delay=250
 
 let time=0
 
+// ===== 初期化 =====
 function reset(){
-chicken={x:200,y:560,vy:0,jump:0}
+chicken={x:200,y:600,vy:0,jump:0}
 obstacles=[]
 score=0
-time=0
 }
 
+// ===== スタート =====
 function start(){
 reset()
 state="game"
 }
 
 // ===== 入力 =====
-canvas.addEventListener("touchstart",input)
-canvas.addEventListener("mousedown",input)
+canvas.addEventListener("mousedown",handleInput)
+canvas.addEventListener("touchstart",handleInput)
 
-function input(e){
-let rect=canvas.getBoundingClientRect()
-let x=(e.touches?e.touches[0].clientX:e.clientX)-rect.left
-let y=(e.touches?e.touches[0].clientY:e.clientY)-rect.top
-
-let scaleX=1280/rect.width
-let scaleY=720/rect.height
-x*=scaleX
-y*=scaleY
+function handleInput(e){
+let p=getPos(e)
 
 if(state==="game"){
 jump()
 }
 
-click(x,y)
+handleClick(p.x,p.y)
 }
 
+// ===== 座標 =====
+function getPos(e){
+const r=canvas.getBoundingClientRect()
+const sx=canvas.width/r.width
+const sy=canvas.height/r.height
+
+if(e.touches){
+return{
+x:(e.touches[0].clientX-r.left)*sx,
+y:(e.touches[0].clientY-r.top)*sy
+}
+}else{
+return{
+x:(e.clientX-r.left)*sx,
+y:(e.clientY-r.top)*sy
+}
+}
+}
+
+function inRect(x,y,rx,ry,rw,rh){
+return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
+}
+
+// ===== ジャンプ（2段）=====
 function jump(){
 let now=Date.now()
 
 if(now-lastTap<delay){
 if(chicken.jump<2){
 chicken.vy=-18
-chicken.jump++
+chicken.jump=2
 }
 }else{
 if(chicken.jump===0){
@@ -104,44 +123,44 @@ chicken.jump=1
 lastTap=now
 }
 
-function inRect(x,y,rx,ry,rw,rh){
-return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
-}
-
 // ===== クリック =====
-function click(x,y){
+function handleClick(x,y){
 
+// タイトル
 if(state==="title"){
-if(inRect(x,y,440,300,400,80)) start()
-if(inRect(x,y,440,400,400,80)) start()
-if(inRect(x,y,440,500,400,80)) start()
+if(inRect(x,y,440,260,400,70)){speed=4;start()}
+if(inRect(x,y,440,350,400,70)){speed=6;start()}
+if(inRect(x,y,440,440,400,70)){speed=8;start()}
 }
 
-else if(state==="game"){
-if(inRect(x,y,1080,20,160,60)){
+// ゲーム中
+if(state==="game"){
+if(inRect(x,y,1100,20,140,60)){
 state="menu"
 }
 }
 
-else if(state==="menu"){
-if(inRect(x,y,360,220,560,100)) state="game"
-if(inRect(x,y,360,340,560,100)){reset();state="game"}
-if(inRect(x,y,360,460,560,100)) state="title"
+// メニュー
+if(state==="menu"){
+if(inRect(x,y,360,200,560,100)){state="game"}
+if(inRect(x,y,360,320,560,100)){reset();state="game"}
+if(inRect(x,y,360,440,560,100)){state="title"}
 }
 
-else if(state==="gameover"){
-if(inRect(x,y,440,420,400,80)){reset();state="game"}
-if(inRect(x,y,440,520,400,80)) state="title"
+// ゲームオーバー
+if(state==="gameover"){
+if(inRect(x,y,440,400,400,80)){reset();state="game"}
+if(inRect(x,y,440,510,400,80)){state="title"}
 }
 }
 
 // ===== サボテン =====
 setInterval(()=>{
 if(state==="game"){
-let h=40+Math.random()*80
-obstacles.push({x:1280,y:600-h,w:30,h:h})
+let h=30+Math.random()*50
+obstacles.push({x:1280,y:650-h,w:20,h:h})
 }
-},1400)
+},1800)
 
 // ===== 更新 =====
 function update(){
@@ -152,14 +171,14 @@ time++
 chicken.vy+=0.8
 chicken.y+=chicken.vy
 
-if(chicken.y>560){
-chicken.y=560
+if(chicken.y>600){
+chicken.y=600
 chicken.vy=0
 chicken.jump=0
 }
 
 obstacles.forEach(o=>{
-o.x-=8
+o.x-=speed
 
 if(
 chicken.x < o.x + o.w &&
@@ -176,18 +195,8 @@ localStorage.setItem("high",highScore)
 })
 
 obstacles=obstacles.filter(o=>o.x>-50)
+
 score++
-}
-
-// ===== ボタン =====
-function btn(x,y,w,h,text){
-ctx.fillStyle="white"
-ctx.fillRect(x,y,w,h)
-
-ctx.fillStyle="black"
-ctx.font="30px sans-serif"
-ctx.textAlign="center"
-ctx.fillText(text,x+w/2,y+h/2+10)
 }
 
 // ===== 描画 =====
@@ -195,76 +204,101 @@ function draw(){
 
 ctx.clearRect(0,0,1280,720)
 
+// タイトル
+if(state==="title"){
+ctx.fillStyle="#87CEEB"
+ctx.fillRect(0,0,1280,720)
+
+ctx.fillStyle="black"
+ctx.font="45px sans-serif"
+ctx.textAlign="center"
+ctx.fillText("🐔 ちきんゲーム",640,180)
+
+btn(440,260,400,70,"EASY")
+btn(440,350,400,70,"NORMAL")
+btn(440,440,400,70,"HARD")
+}
+
+// ゲーム
+if(state==="game"){
+
+// 昼夜（90秒）
 let phase=time%2700
 
-let bg="#87CEEB"
-if(phase>=1800) bg="#0B1A3C"
+if(phase<900) ctx.fillStyle="#87CEEB"
+else if(phase<1800) ctx.fillStyle="#4FC3F7"
+else ctx.fillStyle="#0B1A3C"
 
-ctx.fillStyle=bg
 ctx.fillRect(0,0,1280,720)
+
+// 太陽/月
+ctx.beginPath()
+ctx.arc(1000,80,25,0,Math.PI*2)
+ctx.fillStyle=(phase<1800)?"yellow":"white"
+ctx.fill()
 
 // 地面
 ctx.fillStyle="#8B4513"
-ctx.fillRect(0,600,1280,120)
-
-if(state==="title"){
-ctx.fillStyle="black"
-ctx.font="50px sans-serif"
-ctx.textAlign="center"
-ctx.fillText("🐔 ちきんゲーム",640,200)
-
-btn(440,300,400,80,"EASY")
-btn(440,400,400,80,"NORMAL")
-btn(440,500,400,80,"HARD")
-}
-
-if(state==="game"){
+ctx.fillRect(0,650,1280,70)
 
 // ニワトリ
 ctx.font="40px sans-serif"
-ctx.fillText("🐔",chicken.x,chicken.y+40)
+ctx.fillText("🐔",chicken.x,chicken.y+30)
 
 // サボテン
-ctx.fillStyle="green"
 obstacles.forEach(o=>{
+ctx.fillStyle="green"
 ctx.fillRect(o.x,o.y,o.w,o.h)
 })
 
-// スコア（ズレ修正）
-ctx.fillStyle=(phase>=1800)?"white":"black"
+// スコア
+ctx.fillStyle=(phase<1800)?"black":"white"
 ctx.font="28px sans-serif"
 ctx.textAlign="left"
-ctx.fillText("Score: "+score,30,40)
-ctx.fillText("High: "+highScore,30,80)
+ctx.fillText("Score: "+score,30,50)
+ctx.fillText("High: "+highScore,30,90)
 
-btn(1080,20,160,60,"☰")
+// メニュー
+btn(1100,20,140,60,"≡")
 }
 
+// メニュー画面
 if(state==="menu"){
 ctx.fillStyle="rgba(0,0,0,0.7)"
 ctx.fillRect(0,0,1280,720)
 
-btn(360,220,560,100,"再開")
-btn(360,340,560,100,"リスタート")
-btn(360,460,560,100,"タイトル")
+btn(360,200,560,100,"再開")
+btn(360,320,560,100,"リスタート")
+btn(360,440,560,100,"タイトル")
 }
 
+// ゲームオーバー
 if(state==="gameover"){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,1280,720)
 
 ctx.fillStyle="white"
+ctx.font="50px sans-serif"
 ctx.textAlign="center"
-
-ctx.font="60px sans-serif"
 ctx.fillText("GAME OVER",640,250)
 
 ctx.font="35px sans-serif"
 ctx.fillText("Score: "+score,640,320)
 
-btn(440,420,400,80,"RESTART")
-btn(440,520,400,80,"TITLE")
+btn(440,400,400,80,"RESTART")
+btn(440,510,400,80,"TITLE")
 }
+}
+
+// ===== ボタン =====
+function btn(x,y,w,h,t){
+ctx.fillStyle="white"
+ctx.fillRect(x,y,w,h)
+
+ctx.fillStyle="black"
+ctx.font="28px sans-serif"
+ctx.textAlign="center"
+ctx.fillText(t,x+w/2,y+h/2+10)
 }
 
 // ===== ループ =====
