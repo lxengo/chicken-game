@@ -6,7 +6,6 @@
 
 <title>ちきんゲーム</title>
 
-<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000000">
 
@@ -54,13 +53,12 @@ const ctx=canvas.getContext("2d")
 
 function resizeCanvas(){
 const box=document.getElementById("gameBox")
-if(box.clientWidth===0 || box.clientHeight===0) return
+if(box.clientWidth===0) return
 canvas.width=box.clientWidth
 canvas.height=box.clientHeight
 }
 
-// 初期化タイミング修正
-window.addEventListener("load", ()=>{
+window.addEventListener("load",()=>{
 resizeCanvas()
 reset()
 })
@@ -76,9 +74,6 @@ let baseSpeed=7
 let speed=7
 let maxSpeed=15
 
-let lastTap=0
-const delay=250
-
 let time=0
 let spawnTimer=0
 let spawnInterval=100
@@ -86,7 +81,7 @@ let spawnInterval=100
 // ===== 初期化 =====
 function reset(){
 chicken={
-x:100,
+x:canvas.width*0.15,
 y:canvas.height-140,
 vy:0,
 jumpCount:0
@@ -134,35 +129,37 @@ chicken.jumpCount++
 canvas.addEventListener("pointerdown", e=>{
 e.preventDefault()
 let p=getPos(e)
+
 handleClick(p.x,p.y)
+
 if(state==="game") jump()
 })
 
 // ===== クリック処理 =====
 function handleClick(x,y){
 
+let cx=canvas.width/2
+let w=canvas.width*0.4
+
 if(state==="title"){
-if(inRect(x,y,canvas.width/2-200,300,400,70)) start("easy")
-if(inRect(x,y,canvas.width/2-200,390,400,70)) start("normal")
-if(inRect(x,y,canvas.width/2-200,480,400,70)) start("hard")
+if(inRect(x,y,cx-w/2,canvas.height*0.45,w,60)) start("easy")
+if(inRect(x,y,cx-w/2,canvas.height*0.55,w,60)) start("normal")
+if(inRect(x,y,cx-w/2,canvas.height*0.65,w,60)) start("hard")
 }
 
 else if(state==="game"){
-if(inRect(x,y,canvas.width-150,20,130,50)) state="menu"
+if(inRect(x,y,canvas.width-140,20,120,50)) state="menu"
 }
 
 else if(state==="menu"){
-let w=400
-let h=80
-let x0=canvas.width/2-w/2
-if(inRect(x,y,x0,200,w,h)) state="game"
-if(inRect(x,y,x0,300,w,h)){reset();state="game"}
-if(inRect(x,y,x0,400,w,h)) state="title"
+if(inRect(x,y,cx-w/2,canvas.height*0.4,w,70)) state="game"
+if(inRect(x,y,cx-w/2,canvas.height*0.5,w,70)){reset();state="game"}
+if(inRect(x,y,cx-w/2,canvas.height*0.6,w,70)) state="title"
 }
 
 else if(state==="gameover"){
-if(inRect(x,y,canvas.width/2-200,350,400,70)){reset();state="game"}
-if(inRect(x,y,canvas.width/2-200,440,400,70)) state="title"
+if(inRect(x,y,cx-w/2,canvas.height*0.5,w,60)){reset();state="game"}
+if(inRect(x,y,cx-w/2,canvas.height*0.6,w,60)) state="title"
 }
 }
 
@@ -197,7 +194,7 @@ w:30,
 h:h
 })
 
-spawnInterval=80+Math.random()*40
+spawnInterval=90+Math.random()*60
 }
 
 obstacles.forEach(o=>{
@@ -227,14 +224,13 @@ function draw(){
 
 ctx.clearRect(0,0,canvas.width,canvas.height)
 
-// 朝昼夜
 let phase=time%2700
 ctx.fillStyle=phase<900?"#87CEEB":phase<1800?"#4FC3F7":"#0B1A3C"
 ctx.fillRect(0,0,canvas.width,canvas.height)
 
 // 太陽/月
 ctx.beginPath()
-ctx.arc(canvas.width-80,60,25,0,Math.PI*2)
+ctx.arc(canvas.width-70,60,20,0,Math.PI*2)
 ctx.fillStyle=phase<1800?"yellow":"white"
 ctx.fill()
 
@@ -246,12 +242,17 @@ ctx.fillRect(0,canvas.height-120,canvas.width,120)
 if(state==="title"){
 ctx.fillStyle="black"
 ctx.textAlign="center"
-ctx.font="40px JK"
-ctx.fillText("🐔 ちきんゲーム",canvas.width/2,200)
+ctx.textBaseline="middle"
 
-drawBtn(canvas.width/2-200,300,400,70,"EASY")
-drawBtn(canvas.width/2-200,390,400,70,"NORMAL")
-drawBtn(canvas.width/2-200,480,400,70,"HARD")
+ctx.font="40px JK"
+ctx.fillText("🐔 ちきんゲーム",canvas.width/2,canvas.height*0.3)
+
+let cx=canvas.width/2
+let w=canvas.width*0.4
+
+drawBtn(cx-w/2,canvas.height*0.45,w,60,"EASY")
+drawBtn(cx-w/2,canvas.height*0.55,w,60,"NORMAL")
+drawBtn(cx-w/2,canvas.height*0.65,w,60,"HARD")
 }
 
 // ===== ゲーム =====
@@ -264,12 +265,14 @@ ctx.fillStyle="green"
 ctx.fillRect(o.x,o.y,o.w,o.h)
 })
 
+// スコア（見切れ防止）
 ctx.fillStyle=phase<1800?"black":"white"
+ctx.textAlign="left"
 ctx.font="20px JK"
-ctx.fillText("Score:"+score,20,30)
-ctx.fillText("High:"+highScore,20,60)
+ctx.fillText("Score: "+score,20,30)
+ctx.fillText("High: "+highScore,20,55)
 
-drawBtn(canvas.width-150,20,130,50,"☰")
+drawBtn(canvas.width-140,20,120,50,"☰")
 }
 
 // ===== メニュー =====
@@ -277,9 +280,12 @@ if(state==="menu"){
 ctx.fillStyle="rgba(0,0,0,0.6)"
 ctx.fillRect(0,0,canvas.width,canvas.height)
 
-drawBtn(canvas.width/2-200,200,400,80,"再開")
-drawBtn(canvas.width/2-200,300,400,80,"リスタート")
-drawBtn(canvas.width/2-200,400,400,80,"タイトル")
+let cx=canvas.width/2
+let w=canvas.width*0.4
+
+drawBtn(cx-w/2,canvas.height*0.4,w,70,"再開")
+drawBtn(cx-w/2,canvas.height*0.5,w,70,"リスタート")
+drawBtn(cx-w/2,canvas.height*0.6,w,70,"タイトル")
 }
 
 // ===== ゲームオーバー =====
@@ -290,11 +296,14 @@ ctx.fillRect(0,0,canvas.width,canvas.height)
 ctx.fillStyle="white"
 ctx.textAlign="center"
 ctx.font="40px JK"
-ctx.fillText("GAME OVER",canvas.width/2,200)
-ctx.fillText("Score "+score,canvas.width/2,260)
+ctx.fillText("GAME OVER",canvas.width/2,canvas.height*0.3)
+ctx.fillText("Score "+score,canvas.width/2,canvas.height*0.4)
 
-drawBtn(canvas.width/2-200,350,400,70,"RESTART")
-drawBtn(canvas.width/2-200,440,400,70,"TITLE")
+let cx=canvas.width/2
+let w=canvas.width*0.4
+
+drawBtn(cx-w/2,canvas.height*0.5,w,60,"RESTART")
+drawBtn(cx-w/2,canvas.height*0.6,w,60,"TITLE")
 }
 }
 
@@ -304,8 +313,9 @@ ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
 ctx.fillStyle="black"
 ctx.textAlign="center"
+ctx.textBaseline="middle"
 ctx.font="20px JK"
-ctx.fillText(text,x+w/2,y+h/2+7)
+ctx.fillText(text,x+w/2,y+h/2)
 }
 
 // ループ
@@ -317,7 +327,7 @@ requestAnimationFrame(loop)
 }
 loop()
 
-// ===== Service Worker登録 =====
+// PWA
 if("serviceWorker" in navigator){
 navigator.serviceWorker.register("./sw.js")
 }
