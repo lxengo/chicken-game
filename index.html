@@ -59,7 +59,6 @@ window.addEventListener("load",()=>{
 resizeCanvas()
 reset()
 })
-
 window.addEventListener("resize",resizeCanvas)
 
 // ===== 状態 =====
@@ -179,16 +178,13 @@ if(speed>maxSpeed)speed=maxSpeed
 spawnTimer++
 if(spawnTimer>spawnInterval){
 spawnTimer=0
-
 let h=40+Math.random()*60
-
 obstacles.push({
 x:canvas.width,
 y:canvas.height-120-h,
 w:30,
 h:h
 })
-
 spawnInterval=90+Math.random()*60
 }
 
@@ -202,7 +198,6 @@ chicken.y < o.y + o.h &&
 chicken.y + 40 > o.y
 ){
 state="gameover"
-
 if(score>highScore){
 highScore=score
 localStorage.setItem("high",highScore)
@@ -229,7 +224,7 @@ ctx.fillStyle="black"
 ctx.textAlign="center"
 ctx.textBaseline="middle"
 
-ctx.font="40px JK"
+ctx.font=(canvas.width*0.05)+"px JK"
 ctx.fillText("🐔 ちきんゲーム",canvas.width/2,canvas.height*0.3)
 
 let cx=canvas.width/2
@@ -247,13 +242,19 @@ let phase=time%2700
 ctx.fillStyle=phase<900?"#87CEEB":phase<1800?"#4FC3F7":"#0B1A3C"
 ctx.fillRect(0,0,canvas.width,canvas.height)
 
+// 太陽
+ctx.beginPath()
+ctx.arc(canvas.width-60,60,20,0,Math.PI*2)
+ctx.fillStyle=phase<1800?"yellow":"white"
+ctx.fill()
+
 // 地面
 ctx.fillStyle="#8B4513"
 ctx.fillRect(0,canvas.height-120,canvas.width,120)
 
 // ===== ゲーム =====
 if(state==="game"){
-ctx.font="40px JK"
+ctx.font=(canvas.width*0.04)+"px JK"
 ctx.fillText("🐔",chicken.x,chicken.y)
 
 obstacles.forEach(o=>{
@@ -261,9 +262,9 @@ ctx.fillStyle="green"
 ctx.fillRect(o.x,o.y,o.w,o.h)
 })
 
-ctx.fillStyle="black"
+ctx.fillStyle=phase<1800?"black":"white"
 ctx.textAlign="left"
-ctx.font="20px JK"
+ctx.font=(canvas.width*0.025)+"px JK"
 ctx.fillText("Score: "+score,20,30)
 ctx.fillText("High: "+highScore,20,55)
 
@@ -290,7 +291,7 @@ ctx.fillRect(0,0,canvas.width,canvas.height)
 
 ctx.fillStyle="white"
 ctx.textAlign="center"
-ctx.font="40px JK"
+ctx.font=(canvas.width*0.05)+"px JK"
 ctx.fillText("GAME OVER",canvas.width/2,canvas.height*0.3)
 ctx.fillText("Score "+score,canvas.width/2,canvas.height*0.4)
 
@@ -306,10 +307,12 @@ drawBtn(cx-w/2,canvas.height*0.6,w,60,"TITLE")
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
+
 ctx.fillStyle="black"
 ctx.textAlign="center"
 ctx.textBaseline="middle"
-ctx.font="20px JK"
+ctx.font=(canvas.width*0.03)+"px JK"
+
 ctx.fillText(text,x+w/2,y+h/2)
 }
 
