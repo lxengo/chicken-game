@@ -348,7 +348,7 @@ ctx.fillText("High "+highScore,1220,130)
 }
 
 // ゲームオーバー
-function drawGameOver(function drawGameOver(){
+function drawGameOver(){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,1280,720)
 
@@ -357,6 +357,16 @@ ctx.textAlign="center"
 
 ctx.font="70px JK"
 ctx.fillText("GAME OVER",640,220)
+
+// スコア表示
+ctx.font="45px JK"
+ctx.fillText("Score " + score,640,320)
+ctx.fillText("High " + highScore,640,380)
+
+// ボタン
+drawBtn(440,450,400,80,"RESTART")
+drawBtn(440,560,400,80,"TITLE")
+}
 
 // ★ スコア表示
 ctx.font="45px JK"
