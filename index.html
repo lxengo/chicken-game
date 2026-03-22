@@ -56,7 +56,7 @@ let score=0
 let highScore=localStorage.getItem("high")||0
 
 // 🦉追加
-let skins=["🐔","🐤","🍗","🦉","🦅","🐲"]
+let skins=["🐔","🐤","🍗","🦉","🦅","🐉"]
 let selectedSkin=Number(localStorage.getItem("skin")||0)
 
 // ★のみ
@@ -74,7 +74,7 @@ function isUnlocked(i){
 if(i<=2) return true
 if(i==3 && highScore>=6000) return true // 🦉
 if(i==4 && highScore>=6000) return true // 🦅
-if(i==5 && highScore>=8000) return true // 🐲
+if(i==5 && highScore>=8000) return true // 🐉
 return false
 }
 
@@ -88,10 +88,10 @@ if(selectedSkin==1){jumpPower=17;gravity=0.8}
 if(selectedSkin==2){jumpPower=17;gravity=0.8}
 if(selectedSkin==3){jumpPower=18;gravity=0.78} // 🦉
 if(selectedSkin==4){jumpPower=19;gravity=0.76} // 🦅
-if(selectedSkin==5){jumpPower=20;gravity=0.75} // 🐲
+if(selectedSkin==5){jumpPower=20;gravity=0.75} // 🐉
 }
 
-// エフェクト（🐲のみ）
+// エフェクト（🐉のみ）
 let effects=[]
 function createEffect(){
 if(selectedSkin==5){
@@ -305,7 +305,7 @@ ctx.fillText(skinInfo[selectedSkin],640,465)
 // 解放条件
 ctx.fillStyle="black"
 ctx.font="28px JK"
-ctx.fillText("🦅:6000　🦉:6000　🐲:8000",640,520)
+ctx.fillText("🦅:6000　🦉:6000　🐉:8000",640,520)
 
 drawBtn(440,580,400,80,"もどる")
 }
@@ -335,7 +335,7 @@ ctx.fillRect(o.x-10,o.y+20,10,20)
 ctx.fillRect(o.x+20,o.y+30,10,20)
 })
 
-// ✨（🐲）
+// ✨（🐉）
 ctx.font="30px JK"
 effects.forEach(e=>{
 ctx.globalAlpha=e.life
