@@ -56,13 +56,13 @@ let score=0
 let highScore=localStorage.getItem("high")||0
 
 let skins=["🐔","🐤","🍗","🦅","🐲"]
-let selectedSkin=localStorage.getItem("skin")||0
+let selectedSkin=Number(localStorage.getItem("skin")||0)
 
 let skinInfo=[
-"★★★‪",
-"★★★‪",
-"★★★‪",
-"★★★★‪",
+"★★★",
+"★★★",
+"★★★",
+"★★★★",
 "★★★★★"
 ]
 
@@ -85,9 +85,8 @@ if(selectedSkin==3){jumpPower=21;gravity=0.74}
 if(selectedSkin==4){jumpPower=24;gravity=0.68}
 }
 
-// ===== エフェクト =====
+// エフェクト
 let effects=[]
-
 function createEffect(){
 if(selectedSkin==4){
 for(let i=0;i<6;i++){
@@ -102,7 +101,7 @@ life:1
 }
 }
 
-// ===== ゲーム =====
+// ゲーム
 let baseSpeed=7
 let speed=7
 let maxSpeed=15
@@ -135,6 +134,7 @@ createEffect()
 lastTap=now
 }
 
+// 画面外でもジャンプOK
 document.addEventListener("touchstart",tap)
 document.addEventListener("mousedown",tap)
 
@@ -159,6 +159,7 @@ state="game"
 ignoreTapUntil=Date.now()+500
 }
 
+// 当たり判定
 function getPos(e){
 const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
@@ -181,6 +182,7 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
+// サボテン生成
 setInterval(()=>{
 if(state=="game"){
 obstacles.push({x:1280,y:540})
@@ -222,7 +224,7 @@ localStorage.setItem("high",highScore)
 }
 })
 
-// エフェクト更新
+// エフェクト
 effects.forEach(e=>{
 e.x+=e.vx
 e.y+=e.vy
@@ -330,7 +332,7 @@ ctx.fillRect(o.x-10,o.y+20,10,20)
 ctx.fillRect(o.x+20,o.y+30,10,20)
 })
 
-// ✨エフェクト
+// エフェクト
 ctx.font="30px JK"
 effects.forEach(e=>{
 ctx.globalAlpha=e.life
@@ -358,36 +360,12 @@ ctx.textAlign="center"
 ctx.font="70px JK"
 ctx.fillText("GAME OVER",640,220)
 
-// スコア表示
 ctx.font="45px JK"
 ctx.fillText("Score " + score,640,320)
 ctx.fillText("High " + highScore,640,380)
 
-// ボタン
 drawBtn(440,450,400,80,"RESTART")
 drawBtn(440,560,400,80,"TITLE")
-}
-
-// ★ スコア表示
-ctx.font="45px JK"
-ctx.fillText("Score " + score,640,320)
-ctx.fillText("High " + highScore,640,380)
-
-// ボタン
-drawBtn(440,450,400,80,"RESTART")
-drawBtn(440,560,400,80,"TITLE")
-}){
-ctx.fillStyle="black"
-ctx.fillRect(0,0,1280,720)
-
-ctx.fillStyle="white"
-ctx.textAlign="center"
-
-ctx.font="70px JK"
-ctx.fillText("GAME OVER",640,260)
-
-drawBtn(440,400,400,80,"RESTART")
-drawBtn(440,510,400,80,"TITLE")
 }
 
 // クリック
@@ -434,8 +412,8 @@ ignoreTapUntil=Date.now()+300
 }
 
 else if(state=="gameover"){
-if(inRect(x,y,440,400,400,80)){reset();state="game"}
-if(inRect(x,y,440,510,400,80)){
+if(inRect(x,y,440,450,400,80)){reset();state="game"}
+if(inRect(x,y,440,560,400,80)){
 state="title"
 ignoreTapUntil=Date.now()+600
 }
