@@ -81,7 +81,7 @@ if(selectedSkin==4){jumpPower=19;gravity=0.76}
 if(selectedSkin==5){jumpPower=20;gravity=0.75}
 }
 
-// 🔊 音
+// 音
 let audioCtx
 let soundEnabled=false
 
@@ -92,7 +92,6 @@ audioCtx=new (window.AudioContext||window.webkitAudioContext)()
 soundEnabled=true
 }
 
-// ピョーン音
 function playJump(){
 if(!soundEnabled) return
 
@@ -100,8 +99,6 @@ let osc=audioCtx.createOscillator()
 let gain=audioCtx.createGain()
 
 osc.type="square"
-
-// ピョーン↑
 osc.frequency.setValueAtTime(400,audioCtx.currentTime)
 osc.frequency.exponentialRampToValueAtTime(900,audioCtx.currentTime+0.12)
 
@@ -134,7 +131,7 @@ osc.start()
 osc.stop(audioCtx.currentTime+0.3)
 }
 
-// エフェクト（🐉）
+// エフェクト
 let effects=[]
 function createEffect(){
 if(selectedSkin==5){
@@ -159,11 +156,19 @@ let chicken,obstacles=[]
 
 let ignoreTapUntil=0
 
-// ★ 修正済みジャンプ
+// ★ 二重入力防止（ここが重要）
+let lastInputTime = 0
+const inputGap = 200
+
 function tap(){
 enableSound()
 
 if(state!=="game") return
+
+let now = Date.now()
+if(now - lastInputTime < inputGap) return
+lastInputTime = now
+
 if(Date.now()<ignoreTapUntil) return
 
 if(chicken.jump < 2){
@@ -180,8 +185,12 @@ playJump()
 }
 }
 
+// ★ 端末ごとに分岐
+if('ontouchstart' in window){
 document.addEventListener("touchstart",tap)
+}else{
 document.addEventListener("mousedown",tap)
+}
 
 function reset(){
 chicken={x:200,y:560,vy:0,jump:0}
@@ -277,7 +286,7 @@ obstacles=obstacles.filter(o=>o.x>-50)
 score++
 }
 
-// 描画
+// 描画（省略なし）
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
@@ -375,12 +384,7 @@ drawBtn(440,450,400,80,"RESTART")
 drawBtn(440,560,400,80,"TITLE")
 }
 
-// 入力
 canvas.addEventListener("click",e=>{
-let p=getPos(e)
-handleClick(p.x,p.y)
-})
-canvas.addEventListener("touchstart",e=>{
 let p=getPos(e)
 handleClick(p.x,p.y)
 })
