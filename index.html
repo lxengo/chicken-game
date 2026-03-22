@@ -50,16 +50,21 @@ const ctx=canvas.getContext("2d")
 canvas.width=1280
 canvas.height=720
 
-// ===== 状態 =====
 let state="title"
 
-// ===== スコア =====
 let score=0
 let highScore=localStorage.getItem("high")||0
 
-// ===== スキン =====
 let skins=["🐔","🐤","🍗","🦅","🐲"]
 let selectedSkin=localStorage.getItem("skin")||0
+
+let skinInfo=[
+"安定（標準バランス）",
+"ジャンプ強い（扱いやすい）",
+"ジャンプ強い（🐤と同じ）",
+"ジャンプ強い（上位）",
+"ジャンプ最強（✨エフェクト）"
+]
 
 function isUnlocked(i){
 if(i<=2) return true
@@ -68,37 +73,33 @@ if(i==4 && highScore>=8000) return true
 return false
 }
 
-// ===== 能力 =====
+// 能力
 let jumpPower=16
 let gravity=0.8
 
 function applySkin(){
-
-if(selectedSkin==0){ // 🐔
-jumpPower=16
-gravity=0.8
+if(selectedSkin==0){jumpPower=16;gravity=0.8}
+if(selectedSkin==1){jumpPower=20;gravity=0.75}
+if(selectedSkin==2){jumpPower=20;gravity=0.75}
+if(selectedSkin==3){jumpPower=21;gravity=0.74}
+if(selectedSkin==4){jumpPower=24;gravity=0.68}
 }
 
-if(selectedSkin==1){ // 🐤
-jumpPower=20
-gravity=0.75
-}
+// ===== エフェクト =====
+let effects=[]
 
-if(selectedSkin==2){ // 🍗（🐤と同じ）
-jumpPower=20
-gravity=0.75
+function createEffect(){
+if(selectedSkin==4){
+for(let i=0;i<6;i++){
+effects.push({
+x:chicken.x+25,
+y:chicken.y+25,
+vx:(Math.random()-0.5)*4,
+vy:(Math.random()-0.5)*4,
+life:1
+})
 }
-
-if(selectedSkin==3){ // 🦅
-jumpPower=18
-gravity=0.78
 }
-
-if(selectedSkin==4){ // 🐲
-jumpPower=22
-gravity=0.7
-}
-
 }
 
 // ===== ゲーム =====
@@ -122,11 +123,13 @@ if(now-lastTap<delay){
 if(chicken.jump<2){
 chicken.vy=-(jumpPower+2)
 chicken.jump=2
+createEffect()
 }
 }else{
 if(chicken.jump===0){
 chicken.vy=-jumpPower
 chicken.jump=1
+createEffect()
 }
 }
 lastTap=now
@@ -140,6 +143,7 @@ chicken={x:200,y:560,vy:0,jump:0}
 obstacles=[]
 score=0
 speed=baseSpeed
+effects=[]
 }
 
 function start(d){
@@ -155,7 +159,6 @@ state="game"
 ignoreTapUntil=Date.now()+500
 }
 
-// ===== 座標 =====
 function getPos(e){
 const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
@@ -178,14 +181,13 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// ===== サボテン =====
 setInterval(()=>{
 if(state=="game"){
 obstacles.push({x:1280,y:540})
 }
 },1200)
 
-// ===== 更新 =====
+// 更新
 function update(){
 if(state!="game")return
 
@@ -220,11 +222,19 @@ localStorage.setItem("high",highScore)
 }
 })
 
+// エフェクト更新
+effects.forEach(e=>{
+e.x+=e.vx
+e.y+=e.vy
+e.life-=0.03
+})
+effects=effects.filter(e=>e.life>0)
+
 obstacles=obstacles.filter(o=>o.x>-50)
 score++
 }
 
-// ===== ボタン =====
+// ボタン
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
@@ -235,7 +245,7 @@ ctx.textAlign="center"
 ctx.fillText(text,x+w/2,y+h/2+10)
 }
 
-// ===== タイトル =====
+// タイトル
 function drawTitle(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
@@ -252,7 +262,7 @@ drawBtn(440,520,400,80,"HARD")
 drawBtn(440,620,400,70,"スキン選択")
 }
 
-// ===== スキン画面 =====
+// スキン
 function drawSkin(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
@@ -281,13 +291,21 @@ ctx.strokeRect(x-40,250,80,80)
 }
 })
 
-ctx.font="30px JK"
-ctx.fillText("🦅:5000点　🐲:8000点",640,400)
+// 説明
+ctx.fillStyle="rgba(255,255,255,0.8)"
+ctx.fillRect(340,420,600,70)
 
-drawBtn(440,500,400,80,"もどる")
+ctx.fillStyle="black"
+ctx.font="35px JK"
+ctx.fillText(skinInfo[selectedSkin],640,465)
+
+ctx.font="30px JK"
+ctx.fillText("🦅:5000点　🐲:8000点",640,520)
+
+drawBtn(440,580,400,80,"もどる")
 }
 
-// ===== ゲーム =====
+// ゲーム
 function drawGame(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
@@ -297,7 +315,6 @@ ctx.fillRect(0,600,1280,120)
 
 ctx.font="50px JK"
 
-// 🍗だけ揺れる
 let drawX=chicken.x
 if(selectedSkin==2){
 drawX+=Math.sin(Date.now()*0.01)*5
@@ -305,6 +322,7 @@ drawX+=Math.sin(Date.now()*0.01)*5
 
 ctx.fillText(skins[selectedSkin],drawX,chicken.y+40)
 
+// サボテン
 obstacles.forEach(o=>{
 ctx.fillStyle="green"
 ctx.fillRect(o.x,o.y,20,60)
@@ -312,7 +330,15 @@ ctx.fillRect(o.x-10,o.y+20,10,20)
 ctx.fillRect(o.x+20,o.y+30,10,20)
 })
 
-// 見切れ防止
+// ✨エフェクト
+ctx.font="30px JK"
+effects.forEach(e=>{
+ctx.globalAlpha=e.life
+ctx.fillText("✨",e.x,e.y)
+ctx.globalAlpha=1
+})
+
+// スコア
 ctx.textAlign="right"
 ctx.font="32px JK"
 ctx.fillStyle="black"
@@ -321,7 +347,7 @@ ctx.fillText("Score "+score,1220,80)
 ctx.fillText("High "+highScore,1220,130)
 }
 
-// ===== ゲームオーバー =====
+// ゲームオーバー
 function drawGameOver(){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,1280,720)
@@ -336,7 +362,7 @@ drawBtn(440,400,400,80,"RESTART")
 drawBtn(440,510,400,80,"TITLE")
 }
 
-// ===== クリック =====
+// クリック
 canvas.addEventListener("click",e=>{
 let p=getPos(e)
 handleClick(p.x,p.y)
@@ -373,7 +399,7 @@ localStorage.setItem("skin",i)
 }
 })
 
-if(inRect(x,y,440,500,400,80)){
+if(inRect(x,y,440,580,400,80)){
 state="title"
 ignoreTapUntil=Date.now()+300
 }
@@ -388,7 +414,7 @@ ignoreTapUntil=Date.now()+600
 }
 }
 
-// ===== ループ =====
+// ループ
 function loop(){
 update()
 
