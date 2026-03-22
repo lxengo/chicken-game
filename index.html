@@ -58,6 +58,7 @@ let highScore=localStorage.getItem("high")||0
 let skins=["🐔","🐤","🍗","🦅","🐲"]
 let selectedSkin=Number(localStorage.getItem("skin")||0)
 
+// ★だけ表示
 let skinInfo=[
 "★★★",
 "★★★",
@@ -73,16 +74,16 @@ if(i==4 && highScore>=8000) return true
 return false
 }
 
-// 能力
+// 🔥 バランス調整済み
 let jumpPower=16
 let gravity=0.8
 
 function applySkin(){
-if(selectedSkin==0){jumpPower=16;gravity=0.8}
-if(selectedSkin==1){jumpPower=20;gravity=0.75}
-if(selectedSkin==2){jumpPower=20;gravity=0.75}
-if(selectedSkin==3){jumpPower=21;gravity=0.74}
-if(selectedSkin==4){jumpPower=24;gravity=0.68}
+if(selectedSkin==0){jumpPower=14;gravity=0.85}
+if(selectedSkin==1){jumpPower=17;gravity=0.8}
+if(selectedSkin==2){jumpPower=17;gravity=0.8}
+if(selectedSkin==3){jumpPower=18;gravity=0.78}
+if(selectedSkin==4){jumpPower=20;gravity=0.75}
 }
 
 // エフェクト
@@ -134,7 +135,6 @@ createEffect()
 lastTap=now
 }
 
-// 画面外でもジャンプOK
 document.addEventListener("touchstart",tap)
 document.addEventListener("mousedown",tap)
 
@@ -159,7 +159,6 @@ state="game"
 ignoreTapUntil=Date.now()+500
 }
 
-// 当たり判定
 function getPos(e){
 const r=canvas.getBoundingClientRect()
 const sx=canvas.width/r.width
@@ -182,14 +181,12 @@ function inRect(x,y,rx,ry,rw,rh){
 return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
 }
 
-// サボテン生成
 setInterval(()=>{
 if(state=="game"){
 obstacles.push({x:1280,y:540})
 }
 },1200)
 
-// 更新
 function update(){
 if(state!="game")return
 
@@ -224,7 +221,6 @@ localStorage.setItem("high",highScore)
 }
 })
 
-// エフェクト
 effects.forEach(e=>{
 e.x+=e.vx
 e.y+=e.vy
@@ -236,7 +232,6 @@ obstacles=obstacles.filter(o=>o.x>-50)
 score++
 }
 
-// ボタン
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
@@ -247,7 +242,6 @@ ctx.textAlign="center"
 ctx.fillText(text,x+w/2,y+h/2+10)
 }
 
-// タイトル
 function drawTitle(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
@@ -264,7 +258,6 @@ drawBtn(440,520,400,80,"HARD")
 drawBtn(440,620,400,70,"スキン選択")
 }
 
-// スキン
 function drawSkin(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
@@ -293,21 +286,18 @@ ctx.strokeRect(x-40,250,80,80)
 }
 })
 
-// 説明
-ctx.fillStyle="rgba(255,255,255,0.8)"
-ctx.fillRect(340,420,600,70)
-
-ctx.fillStyle="black"
-ctx.font="35px JK"
+// ★表示（ゴールド）
+ctx.fillStyle="gold"
+ctx.font="40px JK"
 ctx.fillText(skinInfo[selectedSkin],640,465)
 
+ctx.fillStyle="black"
 ctx.font="30px JK"
 ctx.fillText("🦅:5000点　🐲:8000点",640,520)
 
 drawBtn(440,580,400,80,"もどる")
 }
 
-// ゲーム
 function drawGame(){
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
@@ -324,7 +314,6 @@ drawX+=Math.sin(Date.now()*0.01)*5
 
 ctx.fillText(skins[selectedSkin],drawX,chicken.y+40)
 
-// サボテン
 obstacles.forEach(o=>{
 ctx.fillStyle="green"
 ctx.fillRect(o.x,o.y,20,60)
@@ -332,7 +321,6 @@ ctx.fillRect(o.x-10,o.y+20,10,20)
 ctx.fillRect(o.x+20,o.y+30,10,20)
 })
 
-// エフェクト
 ctx.font="30px JK"
 effects.forEach(e=>{
 ctx.globalAlpha=e.life
@@ -340,7 +328,6 @@ ctx.fillText("✨",e.x,e.y)
 ctx.globalAlpha=1
 })
 
-// スコア
 ctx.textAlign="right"
 ctx.font="32px JK"
 ctx.fillStyle="black"
@@ -349,7 +336,6 @@ ctx.fillText("Score "+score,1220,80)
 ctx.fillText("High "+highScore,1220,130)
 }
 
-// ゲームオーバー
 function drawGameOver(){
 ctx.fillStyle="black"
 ctx.fillRect(0,0,1280,720)
@@ -361,14 +347,13 @@ ctx.font="70px JK"
 ctx.fillText("GAME OVER",640,220)
 
 ctx.font="45px JK"
-ctx.fillText("Score " + score,640,320)
-ctx.fillText("High " + highScore,640,380)
+ctx.fillText("Score "+score,640,320)
+ctx.fillText("High "+highScore,640,380)
 
 drawBtn(440,450,400,80,"RESTART")
 drawBtn(440,560,400,80,"TITLE")
 }
 
-// クリック
 canvas.addEventListener("click",e=>{
 let p=getPos(e)
 handleClick(p.x,p.y)
@@ -380,18 +365,13 @@ handleClick(p.x,p.y)
 })
 
 function handleClick(x,y){
-
 if(Date.now()<ignoreTapUntil) return
 
 if(state=="title"){
 if(inRect(x,y,440,320,400,80))start("easy")
 if(inRect(x,y,440,420,400,80))start("normal")
 if(inRect(x,y,440,520,400,80))start("hard")
-
-if(inRect(x,y,440,620,400,70)){
-state="skin"
-ignoreTapUntil=Date.now()+300
-}
+if(inRect(x,y,440,620,400,70)){state="skin";ignoreTapUntil=Date.now()+300}
 }
 
 else if(state=="skin"){
@@ -404,23 +384,15 @@ localStorage.setItem("skin",i)
 }
 }
 })
-
-if(inRect(x,y,440,580,400,80)){
-state="title"
-ignoreTapUntil=Date.now()+300
-}
+if(inRect(x,y,440,580,400,80)){state="title";ignoreTapUntil=Date.now()+300}
 }
 
 else if(state=="gameover"){
 if(inRect(x,y,440,450,400,80)){reset();state="game"}
-if(inRect(x,y,440,560,400,80)){
-state="title"
-ignoreTapUntil=Date.now()+600
-}
+if(inRect(x,y,440,560,400,80)){state="title";ignoreTapUntil=Date.now()+600}
 }
 }
 
-// ループ
 function loop(){
 update()
 
