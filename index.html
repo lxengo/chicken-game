@@ -55,7 +55,7 @@ let state="title"
 let score=0
 let highScore=localStorage.getItem("high")||0
 
-let skins=["🐔","🐤","🍗","🦅","🐲"]
+let skins=["🐔","🐤","🍗","🦅","🐉"]
 let selectedSkin=Number(localStorage.getItem("skin")||0)
 
 // ★だけ表示
@@ -293,7 +293,7 @@ ctx.fillText(skinInfo[selectedSkin],640,465)
 
 ctx.fillStyle="black"
 ctx.font="30px JK"
-ctx.fillText("🦅:5000点　🐲:8000点",640,520)
+ctx.fillText("🦅:5000点　🐉:8000点",640,520)
 
 drawBtn(440,580,400,80,"もどる")
 }
