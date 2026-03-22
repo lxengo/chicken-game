@@ -55,21 +55,16 @@ let state="title"
 let score=0
 let highScore=localStorage.getItem("high")||0
 
-// 🐉に変更
 let skins=["🐔","🐤","🍗","🦉","🦅","🐉"]
 let selectedSkin=Number(localStorage.getItem("skin")||0)
 
-// ★
-let skinInfo=[
-"★★★","★★★","★★★","★★★★","★★★★","★★★★★"
-]
+let skinInfo=["★★★","★★★","★★★","★★★★","★★★★","★★★★★"]
 
-// 解放条件（🦉🦅どっちも7000）
 function isUnlocked(i){
 if(i<=2) return true
-if(i==3 && highScore>=7000) return true // 🦉
-if(i==4 && highScore>=7000) return true // 🦅
-if(i==5 && highScore>=8000) return true // 🐉
+if(i==3 && highScore>=7000) return true
+if(i==4 && highScore>=7000) return true
+if(i==5 && highScore>=8000) return true
 return false
 }
 
@@ -97,29 +92,44 @@ audioCtx=new (window.AudioContext||window.webkitAudioContext)()
 soundEnabled=true
 }
 
+// ピョーン音
 function playJump(){
 if(!soundEnabled) return
+
 let osc=audioCtx.createOscillator()
 let gain=audioCtx.createGain()
+
 osc.type="square"
-osc.frequency.value=600
-gain.gain.value=0.1
+
+// ピョーン↑
+osc.frequency.setValueAtTime(400,audioCtx.currentTime)
+osc.frequency.exponentialRampToValueAtTime(900,audioCtx.currentTime+0.12)
+
+gain.gain.setValueAtTime(0.15,audioCtx.currentTime)
+gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.15)
+
 osc.connect(gain)
 gain.connect(audioCtx.destination)
+
 osc.start()
-osc.stop(audioCtx.currentTime+0.08)
+osc.stop(audioCtx.currentTime+0.15)
 }
 
 function playDead(){
 if(!soundEnabled) return
+
 let osc=audioCtx.createOscillator()
 let gain=audioCtx.createGain()
+
 osc.type="sawtooth"
 osc.frequency.setValueAtTime(400,audioCtx.currentTime)
 osc.frequency.exponentialRampToValueAtTime(100,audioCtx.currentTime+0.3)
+
 gain.gain.value=0.15
+
 osc.connect(gain)
 gain.connect(audioCtx.destination)
+
 osc.start()
 osc.stop(audioCtx.currentTime+0.3)
 }
@@ -147,34 +157,27 @@ let maxSpeed=15
 
 let chicken,obstacles=[]
 
-let lastTap=0
 let ignoreTapUntil=0
-const delay=250
 
+// ★ 修正済みジャンプ
 function tap(){
 enableSound()
 
 if(state!=="game") return
 if(Date.now()<ignoreTapUntil) return
 
-let now=Date.now()
+if(chicken.jump < 2){
 
-if(now-lastTap<delay){
-if(chicken.jump<2){
-chicken.vy=-(jumpPower+2)
-chicken.jump=2
-createEffect()
-playJump()
-}
-}else{
 if(chicken.jump===0){
 chicken.vy=-jumpPower
-chicken.jump=1
+}else{
+chicken.vy=-(jumpPower-2)
+}
+
+chicken.jump++
 createEffect()
 playJump()
 }
-}
-lastTap=now
 }
 
 document.addEventListener("touchstart",tap)
@@ -274,7 +277,7 @@ obstacles=obstacles.filter(o=>o.x>-50)
 score++
 }
 
-// 描画系（前と同じ）
+// 描画
 function drawBtn(x,y,w,h,text){
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
