@@ -45,26 +45,6 @@ height:100%;
 
 <script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js"
-import {
-getFirestore,
-collection,
-addDoc
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js"
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBA7oGipxnkOYHJ29wJlcF2lS7UbJ-8Fys",
-  authDomain: "chicken-15607.firebaseapp.com",
-  projectId: "chicken-15607",
-  storageBucket: "chicken-15607.firebasestorage.app",
-  messagingSenderId: "474885851996",
-  appId: "1:474885851996:web:ff8a1313accf1f5efa8f99",
-  measurementId: "G-X06FHQ41W7"
-}
-
-const app = initializeApp(firebaseConfig)
-const db = getFirestore(app)
-
 const canvas=document.getElementById("game")
 const ctx=canvas.getContext("2d")
 
