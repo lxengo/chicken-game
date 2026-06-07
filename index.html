@@ -290,11 +290,12 @@ state="gameover"
 playDead()
 
 if(score>100){
-highScore=score
-localStorage.setItem("high",highScore)
+
+saveScore(score)
+
+state="gameover"
+
 }
-}
-})
 
 effects.forEach(e=>{
 e.x+=e.vx
