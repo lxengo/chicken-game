@@ -74,7 +74,7 @@ canvas.height=720
 let state="title"
 
 let score=0
-let highScore=localStorage.getItem("high")||0
+let highScore=0
 
 let skins=["🐔","🐤","🍗","🦉","🦅","🐉"]
 let selectedSkin=Number(localStorage.getItem("skin")||0)
@@ -289,7 +289,7 @@ chicken.y + 50 > o.y
 state="gameover"
 playDead()
 
-if(score>highScore){
+if(score>100){
 highScore=score
 localStorage.setItem("high",highScore)
 }
