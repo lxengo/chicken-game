@@ -74,7 +74,7 @@ canvas.height=720
 let state="title"
 
 let score=0
-let highScore=0
+let highScore=Number(localStorage.getItem("high")||0)
 
 let skins=["🐔","🐤","🍗","🦉","🦅","🐉"]
 let selectedSkin=Number(localStorage.getItem("skin")||0)
