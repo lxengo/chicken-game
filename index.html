@@ -59,6 +59,16 @@ let skins=["🐔","🐤","🍗","🦉","🦅","🐉"]
 let selectedSkin=Number(localStorage.getItem("skin")||0)
 
 let skinInfo=["★★★","★★★","★★★","★★★★","★★★★","★★★★★"]
+let maps=["🌳草原","🌋火山","🌙月","🪐宇宙"]
+let selectedMap=0
+
+function isMapUnlocked(i){
+if(i==0) return true
+if(i==1 && highScore>=2000) return true
+if(i==2 && highScore>=5000) return true
+if(i==3 && highScore>=8000) return true
+return false
+}
 
 function isUnlocked(i){
 if(i<=2) return true
@@ -307,7 +317,7 @@ drawBtn(440,320,400,80,"EASY")
 drawBtn(440,420,400,80,"NORMAL")
 drawBtn(440,520,400,80,"HARD")
 drawBtn(440,620,400,70,"スキン選択")
-}
+drawBtn(440,720-170,400,70,"マップ選択")
 
 function drawSkin(){
 ctx.fillStyle="#87CEEB"
@@ -340,20 +350,247 @@ ctx.fillText("🦉🦅:7000　🐉:8000",640,520)
 drawBtn(440,580,400,80,"もどる")
 }
 
-function drawGame(){
+function drawMap(){
+
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
-ctx.fillStyle="#8B4513"
+
+ctx.fillStyle="black"
+ctx.textAlign="center"
+ctx.font="60px JK"
+ctx.fillText("マップ選択",640,120)
+
+maps.forEach((m,i)=>{
+
+let x=180+i*250
+
+ctx.font="80px JK"
+
+if(isMapUnlocked(i)){
+ctx.fillText(m,x,320)
+}else{
+ctx.fillText("🔒",x,320)
+}
+
+if(i==selectedMap){
+ctx.strokeStyle="red"
+ctx.lineWidth=5
+ctx.strokeRect(x-80,240,160,120)
+}
+
+})
+
+ctx.font="30px JK"
+ctx.fillStyle="black"
+ctx.fillText("🌋2000　🌙5000　🪐8000",640,500)
+
+drawBtn(440,580,400,80,"もどる")
+}
+
+function drawMap(){
+
+ctx.fillStyle="#87CEEB"
+ctx.fillRect(0,0,1280,720)
+
+ctx.fillStyle="black"
+ctx.textAlign="center"
+ctx.font="60px JK"
+ctx.fillText("マップ選択",640,120)
+
+ctx.font="55px JK"
+
+maps.forEach((m,i)=>{
+
+let x=260+i*250
+
+if(isMapUnlocked(i)){
+ctx.fillText(m,x,300)
+}else{
+ctx.fillText("🔒",x,300)
+}
+
+if(i==selectedMap){
+ctx.strokeStyle="red"
+ctx.lineWidth=5
+ctx.strokeRect(x-70,240,140,90)
+}
+})
+
+ctx.font="30px JK"
+
+ctx.fillText(
+"🌋2000　🌙5000　🪐8000",
+640,
+500
+)
+
+drawBtn(
+440,
+580,
+400,
+80,
+"もどる"
+)
+}
+
+function drawGame(){
+
+// 🌳草原
+if(selectedMap==0){
+ctx.fillStyle="#87CEEB"
+ctx.fillRect(0,0,1280,720)
+
+ctx.fillStyle="#6ab04c"
 ctx.fillRect(0,600,1280,120)
+}
+
+// 🌋火山
+if(selectedMap==1){
+ctx.fillStyle="#ff5e57"
+ctx.fillRect(0,0,1280,720)
+
+ctx.fillStyle="#3d1f00"
+ctx.fillRect(0,600,1280,120)
+
+ctx.font="120px JK"
+ctx.fillText("🌋",1000,200)
+}
+
+// 🌙月
+if(selectedMap==2){
+ctx.fillStyle="#0f172a"
+ctx.fillRect(0,0,1280,720)
+
+ctx.fillStyle="#888"
+ctx.fillRect(0,600,1280,120)
+
+ctx.font="120px JK"
+ctx.fillText("🌙",1000,200)
+}
+
+// 🪐宇宙
+if(selectedMap==3){
+ctx.fillStyle="#000022"
+ctx.fillRect(0,0,1280,720)
+
+ctx.fillStyle="#111"
+ctx.fillRect(0,600,1280,120)
+
+ctx.font="120px JK"
+ctx.fillText("🪐",1000,200)
+
+for(let i=0;i<40;i++){
+ctx.fillStyle="white"
+ctx.fillRect(
+(i*97)%1280,
+(i*53)%600,
+3,3
+)
+}
+}
+}
+
+// 火山
+if(selectedMap==1){
+ctx.fillStyle="#ff6b35"
+ctx.fillRect(0,0,1280,720)
+
+ctx.fillStyle="#3d1f00"
+ctx.fillRect(0,600,1280,120)
+}
+
+// 月
+if(selectedMap==2){
+ctx.fillStyle="#0f172a"
+ctx.fillRect(0,0,1280,720)
+
+ctx.fillStyle="#888"
+ctx.fillRect(0,600,1280,120)
+}
+
+// 宇宙
+if(selectedMap==3){
+ctx.fillStyle="#000022"
+ctx.fillRect(0,0,1280,720)
+
+ctx.fillStyle="#111"
+ctx.fillRect(0,600,1280,120)
+
+for(let i=0;i<30;i++){
+ctx.fillStyle="white"
+ctx.fillRect(
+(i*97)%1280,
+(i*57)%600,
+3,3
+)
+}
+}
+
+ctx.font="50px JK"
+ctx.fillText(
+skins[selectedSkin],
+chicken.x,
+chicken.y+40
+)
+
+obstacles.forEach(o=>{
+
+ctx.font="55px JK"
+
+if(selectedMap==0){
+ctx.fillText("🌳",o.x,o.y+50)
+}
+
+if(selectedMap==1){
+ctx.fillText("🌋",o.x,o.y+50)
+}
+
+if(selectedMap==2){
+ctx.fillText("☄️",o.x,o.y+50)
+}
+
+if(selectedMap==3){
+ctx.fillText("👾",o.x,o.y+50)
+}
+})
+
+ctx.font="30px JK"
+
+effects.forEach(e=>{
+ctx.globalAlpha=e.life
+ctx.fillText("✨",e.x,e.y)
+ctx.globalAlpha=1
+})
+
+ctx.textAlign="right"
+ctx.fillStyle="white"
+ctx.font="32px JK"
+
+ctx.fillText(
+"Score "+score,
+1220,
+80
+)
+
+ctx.fillText(
+"High "+highScore,
+1220,
+130
+)
+}
 
 ctx.font="50px JK"
 ctx.fillText(skins[selectedSkin],chicken.x,chicken.y+40)
 
 obstacles.forEach(o=>{
-ctx.fillStyle="green"
-ctx.fillRect(o.x,o.y,20,60)
-ctx.fillRect(o.x-10,o.y+20,10,20)
-ctx.fillRect(o.x+20,o.y+30,10,20)
+
+ctx.font="55px JK"
+
+if(selectedMap==0) ctx.fillText("🌳",o.x,o.y+50)
+if(selectedMap==1) ctx.fillText("🌋",o.x,o.y+50)
+if(selectedMap==2) ctx.fillText("☄️",o.x,o.y+50)
+if(selectedMap==3) ctx.fillText("👾",o.x,o.y+50)
+
 })
 
 ctx.font="30px JK"
@@ -398,7 +635,34 @@ if(inRect(x,y,440,420,400,80))start("normal")
 if(inRect(x,y,440,520,400,80))start("hard")
 if(inRect(x,y,440,620,400,70)){state="skin";ignoreTapUntil=Date.now()+300}
 }
+if(inRect(x,y,440,550,400,70)){
+state="map"
+ignoreTapUntil=Date.now()+300
+}
 else if(state=="skin"){
+else if(state=="map"){
+
+maps.forEach((m,i)=>{
+
+let mx=180+i*250
+
+if(inRect(x,y,mx-80,240,160,120)){
+
+if(isMapUnlocked(i)){
+selectedMap=i
+localStorage.setItem("map",i)
+}
+
+}
+
+})
+
+if(inRect(x,y,440,580,400,80)){
+state="title"
+ignoreTapUntil=Date.now()+300
+}
+
+}
 skins.forEach((s,i)=>{
 let sx=240+i*150
 if(inRect(x,y,sx-40,250,80,80)){
@@ -420,6 +684,7 @@ function loop(){
 update()
 if(state=="title")drawTitle()
 if(state=="skin")drawSkin()
+if(state=="map")drawMap()
 if(state=="game")drawGame()
 if(state=="gameover")drawGameOver()
 requestAnimationFrame(loop)
