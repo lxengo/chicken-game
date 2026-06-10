@@ -4,22 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>ちきんゲーム</title>
+<title>ちきんゲームDX</title>
 
 <style>
-@font-face{
-font-family:"JK";
-src:url("./JKMaruGothic.ttf");
-}
-
 body{
 margin:0;
 background:#ddd;
-font-family:"JK", sans-serif;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
+overflow:hidden;
+font-family:sans-serif;
 }
 
 #gameBox{
@@ -39,11 +35,13 @@ height:100%;
 </head>
 
 <body>
+
 <div id="gameBox">
 <canvas id="game"></canvas>
 </div>
 
 <script>
+
 const canvas=document.getElementById("game")
 const ctx=canvas.getContext("2d")
 
@@ -53,373 +51,550 @@ canvas.height=720
 let state="title"
 
 let score=0
-let highScore=localStorage.getItem("high")||0
+let highScore=Number(localStorage.getItem("high")||0)
 
-let skins=["🐔","🐤","🍗","🦉","🦅","🐉"]
-let selectedSkin=Number(localStorage.getItem("skin")||0)
+let maps=[
+"🌳草原",
+"🌋火山",
+"🌙月",
+"🪐宇宙"
+]
 
-let skinInfo=["★★★","★★★","★★★","★★★★","★★★★","★★★★★"]
-let maps=["🌳草原","🌋火山","🌙月","🪐宇宙"]
-let selectedMap=0
+let selectedMap=
+Number(localStorage.getItem("map")||0)
 
-function isMapUnlocked(i){
-if(i==0) return true
-if(i==1 && highScore>=2000) return true
-if(i==2 && highScore>=5000) return true
-if(i==3 && highScore>=8000) return true
-return false
-}
+let skins=[
+"🐔",
+"🐤",
+"🍗",
+"🦉",
+"🦅",
+"🐉"
+]
+
+let selectedSkin=
+Number(localStorage.getItem("skin")||0)
+
+let skinInfo=[
+"★★★",
+"★★★",
+"★★★",
+"★★★★",
+"★★★★",
+"★★★★★"
+]
 
 function isUnlocked(i){
+
 if(i<=2) return true
-if(i==3 && highScore>=7000) return true
-if(i==4 && highScore>=7000) return true
-if(i==5 && highScore>=8000) return true
+
+if(i==3 && highScore>=7000)
+return true
+
+if(i==4 && highScore>=7000)
+return true
+
+if(i==5 && highScore>=8000)
+return true
+
 return false
 }
 
-// 能力
+function isMapUnlocked(i){
+
+if(i==0) return true
+
+if(i==1 && highScore>=5000)
+return true
+
+if(i==2 && highScore>=8000)
+return true
+
+if(i==3 && highScore>=9000)
+return true
+
+return false
+}
+
 let jumpPower=16
 let gravity=0.8
 
 function applySkin(){
-if(selectedSkin==0){jumpPower=14;gravity=0.85}
-if(selectedSkin==1){jumpPower=17;gravity=0.8}
-if(selectedSkin==2){jumpPower=17;gravity=0.8}
-if(selectedSkin==3){jumpPower=18;gravity=0.78}
-if(selectedSkin==4){jumpPower=19;gravity=0.76}
-if(selectedSkin==5){jumpPower=20;gravity=0.75}
+
+if(selectedSkin==0){
+jumpPower=14
+gravity=0.85
 }
 
-// 音
-let audioCtx
-let soundEnabled=false
-
-function enableSound(){
-if(!audioCtx){
-audioCtx=new (window.AudioContext||window.webkitAudioContext)()
-}
-soundEnabled=true
+if(selectedSkin==1){
+jumpPower=17
+gravity=0.8
 }
 
-function playJump(){
-if(!soundEnabled) return
-
-let osc=audioCtx.createOscillator()
-let gain=audioCtx.createGain()
-
-osc.type="square"
-osc.frequency.setValueAtTime(400,audioCtx.currentTime)
-osc.frequency.exponentialRampToValueAtTime(900,audioCtx.currentTime+0.12)
-
-gain.gain.setValueAtTime(0.15,audioCtx.currentTime)
-gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.15)
-
-osc.connect(gain)
-gain.connect(audioCtx.destination)
-
-osc.start()
-osc.stop(audioCtx.currentTime+0.15)
+if(selectedSkin==2){
+jumpPower=17
+gravity=0.8
 }
 
-function playDead(){
-if(!soundEnabled) return
-
-let osc=audioCtx.createOscillator()
-let gain=audioCtx.createGain()
-
-osc.type="sawtooth"
-osc.frequency.setValueAtTime(400,audioCtx.currentTime)
-osc.frequency.exponentialRampToValueAtTime(100,audioCtx.currentTime+0.3)
-
-gain.gain.value=0.15
-
-osc.connect(gain)
-gain.connect(audioCtx.destination)
-
-osc.start()
-osc.stop(audioCtx.currentTime+0.3)
+if(selectedSkin==3){
+jumpPower=18
+gravity=0.78
 }
 
-// エフェクト
-let effects=[]
-function createEffect(){
+if(selectedSkin==4){
+jumpPower=19
+gravity=0.76
+}
+
 if(selectedSkin==5){
-for(let i=0;i<6;i++){
-effects.push({
-x:chicken.x+25,
-y:chicken.y+25,
-vx:(Math.random()-0.5)*4,
-vy:(Math.random()-0.5)*4,
-life:1
-})
-}
+jumpPower=20
+gravity=0.75
 }
 }
 
-// ゲーム
+let chicken
+let obstacles=[]
+
 let baseSpeed=7
 let speed=7
 let maxSpeed=15
 
-let chicken,obstacles=[]
+let effects=[]
 
-let ignoreTapUntil=0
+function createEffect(){
 
-// ★ 二重入力防止（ここが重要）
-let lastInputTime = 0
-const inputGap = 200
+if(selectedSkin!=5) return
+
+for(let i=0;i<6;i++){
+
+effects.push({
+
+x:chicken.x+25,
+y:chicken.y+25,
+
+vx:(Math.random()-0.5)*4,
+vy:(Math.random()-0.5)*4,
+
+life:1
+
+})
+
+}
+}
+
+function reset(){
+
+chicken={
+
+x:200,
+y:560,
+
+vy:0,
+
+jump:0
+
+}
+
+obstacles=[]
+
+effects=[]
+
+score=0
+
+speed=baseSpeed
+}
+
+function start(mode){
+
+if(mode=="easy"){
+baseSpeed=5
+maxSpeed=10
+}
+else if(mode=="hard"){
+baseSpeed=9
+maxSpeed=18
+}
+else{
+baseSpeed=7
+maxSpeed=15
+}
+
+applySkin()
+
+reset()
+
+state="game"
+}
 
 function tap(){
-enableSound()
 
-if(state!=="game") return
+if(state!="game") return
 
-let now = Date.now()
-if(now - lastInputTime < inputGap) return
-lastInputTime = now
+if(chicken.jump<2){
 
-if(Date.now()<ignoreTapUntil) return
-
-if(chicken.jump < 2){
-
-if(chicken.jump===0){
+if(chicken.jump==0){
 chicken.vy=-jumpPower
-}else{
+}
+else{
 chicken.vy=-(jumpPower-2)
 }
 
 chicken.jump++
+
 createEffect()
-playJump()
 }
 }
 
-// ★ 端末ごとに分岐
-if('ontouchstart' in window){
-document.addEventListener("touchstart",tap)
-}else{
-document.addEventListener("mousedown",tap)
-}
+document.addEventListener(
+"touchstart",
+tap
+)
 
-function reset(){
-chicken={x:200,y:560,vy:0,jump:0}
-obstacles=[]
-score=0
-speed=baseSpeed
-effects=[]
-}
-
-function start(d){
-if(Date.now()<ignoreTapUntil) return
-
-if(d=="easy"){baseSpeed=5;maxSpeed=10}
-else if(d=="hard"){baseSpeed=9;maxSpeed=18}
-else{baseSpeed=7;maxSpeed=15}
-
-applySkin()
-reset()
-state="game"
-ignoreTapUntil=Date.now()+500
-}
-
-function getPos(e){
-const r=canvas.getBoundingClientRect()
-const sx=canvas.width/r.width
-const sy=canvas.height/r.height
-
-if(e.touches){
-return{
-x:(e.touches[0].clientX-r.left)*sx,
-y:(e.touches[0].clientY-r.top)*sy
-}
-}else{
-return{
-x:(e.clientX-r.left)*sx,
-y:(e.clientY-r.top)*sy
-}
-}
-}
-
-function inRect(x,y,rx,ry,rw,rh){
-return x>rx&&x<rx+rw&&y>ry&&y<ry+rh
-}
+document.addEventListener(
+"mousedown",
+tap
+)
 
 setInterval(()=>{
+
 if(state=="game"){
-obstacles.push({x:1280,y:540})
+
+obstacles.push({
+
+x:1280,
+y:540
+
+})
+
 }
+
 },1200)
 
 function update(){
-if(state!="game")return
+
+if(state!="game")
+return
 
 chicken.vy+=gravity
+
 chicken.y+=chicken.vy
 
 if(chicken.y>560){
+
 chicken.y=560
+
 chicken.vy=0
+
 chicken.jump=0
 }
 
-speed=baseSpeed+score*0.005
-if(speed>maxSpeed)speed=maxSpeed
+speed=
+baseSpeed+
+score*0.005
+
+if(speed>maxSpeed)
+speed=maxSpeed
 
 obstacles.forEach(o=>{
+
 o.x-=speed
 
 if(
-chicken.x < o.x + 40 &&
-chicken.x + 50 > o.x &&
-chicken.y < o.y + 80 &&
-chicken.y + 50 > o.y
+
+chicken.x < o.x+40 &&
+
+chicken.x+50 > o.x &&
+
+chicken.y < o.y+80 &&
+
+chicken.y+50 > o.y
+
 ){
+
 state="gameover"
-playDead()
 
 if(score>highScore){
+
 highScore=score
-localStorage.setItem("high",highScore)
+
+localStorage.setItem(
+"high",
+highScore
+)
+
 }
+
 }
+
 })
 
 effects.forEach(e=>{
+
 e.x+=e.vx
 e.y+=e.vy
-e.life-=0.03
-})
-effects=effects.filter(e=>e.life>0)
 
-obstacles=obstacles.filter(o=>o.x>-50)
+e.life-=0.03
+
+})
+
+effects=
+effects.filter(
+e=>e.life>0
+)
+
+obstacles=
+obstacles.filter(
+o=>o.x>-50
+)
+
 score++
 }
-
-// 描画（省略なし）
 function drawBtn(x,y,w,h,text){
+
 ctx.fillStyle="white"
 ctx.fillRect(x,y,w,h)
+
 ctx.fillStyle="black"
-ctx.font="35px JK"
+ctx.font="35px sans-serif"
 ctx.textAlign="center"
-ctx.fillText(text,x+w/2,y+h/2+10)
+
+ctx.fillText(
+text,
+x+w/2,
+y+h/2+12
+)
+
 }
 
 function drawTitle(){
+
 ctx.fillStyle="#87CEEB"
-ctx.fillRect(0,0,1280,720)
+ctx.fillRect(
+0,
+0,
+1280,
+720
+)
+
 ctx.fillStyle="black"
+
 ctx.textAlign="center"
-ctx.font="70px JK"
-ctx.fillText("🐔 ちきんゲーム",640,200)
-drawBtn(440,320,400,80,"EASY")
-drawBtn(440,420,400,80,"NORMAL")
-drawBtn(440,520,400,80,"HARD")
-drawBtn(440,620,400,70,"スキン選択")
-drawBtn(440,720-170,400,70,"マップ選択")
+
+ctx.font="70px sans-serif"
+
+ctx.fillText(
+"🐔 ちきんゲームDX",
+640,
+180
+)
+
+drawBtn(
+440,
+280,
+400,
+80,
+"EASY"
+)
+
+drawBtn(
+440,
+390,
+400,
+80,
+"NORMAL"
+)
+
+drawBtn(
+440,
+500,
+400,
+80,
+"HARD"
+)
+
+drawBtn(
+440,
+610,
+400,
+70,
+"スキン選択"
+)
+
+drawBtn(
+20,
+610,
+320,
+70,
+"マップ選択"
+)
+
+}
 
 function drawSkin(){
-ctx.fillStyle="#87CEEB"
-ctx.fillRect(0,0,1280,720)
-ctx.fillStyle="black"
-ctx.textAlign="center"
-ctx.font="60px JK"
-ctx.fillText("スキン選択",640,120)
 
-ctx.font="70px JK"
+ctx.fillStyle="#87CEEB"
+ctx.fillRect(
+0,
+0,
+1280,
+720
+)
+
+ctx.fillStyle="black"
+
+ctx.textAlign="center"
+
+ctx.font="60px sans-serif"
+
+ctx.fillText(
+"スキン選択",
+640,
+120
+)
+
+ctx.font="70px sans-serif"
+
 skins.forEach((s,i)=>{
-let x=240+i*150
-if(!isUnlocked(i)){ctx.fillText("🔒",x,300)}
-else{ctx.fillText(s,x,300)}
-if(i==selectedSkin){
-ctx.strokeStyle="red"
-ctx.lineWidth=5
-ctx.strokeRect(x-40,250,80,80)
+
+let x=
+240+i*150
+
+if(!isUnlocked(i)){
+
+ctx.fillText(
+"🔒",
+x,
+300
+)
+
+}else{
+
+ctx.fillText(
+s,
+x,
+300
+)
+
 }
+
+if(i==selectedSkin){
+
+ctx.strokeStyle="red"
+
+ctx.lineWidth=5
+
+ctx.strokeRect(
+x-40,
+250,
+80,
+80
+)
+
+}
+
 })
 
 ctx.fillStyle="gold"
-ctx.font="40px JK"
-ctx.fillText(skinInfo[selectedSkin],640,465)
 
-ctx.fillStyle="black"
-ctx.font="28px JK"
-ctx.fillText("🦉🦅:7000　🐉:8000",640,520)
-
-drawBtn(440,580,400,80,"もどる")
-}
-
-function drawMap(){
-
-ctx.fillStyle="#87CEEB"
-ctx.fillRect(0,0,1280,720)
-
-ctx.fillStyle="black"
-ctx.textAlign="center"
-ctx.font="60px JK"
-ctx.fillText("マップ選択",640,120)
-
-maps.forEach((m,i)=>{
-
-let x=180+i*250
-
-ctx.font="80px JK"
-
-if(isMapUnlocked(i)){
-ctx.fillText(m,x,320)
-}else{
-ctx.fillText("🔒",x,320)
-}
-
-if(i==selectedMap){
-ctx.strokeStyle="red"
-ctx.lineWidth=5
-ctx.strokeRect(x-80,240,160,120)
-}
-
-})
-
-ctx.font="30px JK"
-ctx.fillStyle="black"
-ctx.fillText("🌋2000　🌙5000　🪐8000",640,500)
-
-drawBtn(440,580,400,80,"もどる")
-}
-
-function drawMap(){
-
-ctx.fillStyle="#87CEEB"
-ctx.fillRect(0,0,1280,720)
-
-ctx.fillStyle="black"
-ctx.textAlign="center"
-ctx.font="60px JK"
-ctx.fillText("マップ選択",640,120)
-
-ctx.font="55px JK"
-
-maps.forEach((m,i)=>{
-
-let x=260+i*250
-
-if(isMapUnlocked(i)){
-ctx.fillText(m,x,300)
-}else{
-ctx.fillText("🔒",x,300)
-}
-
-if(i==selectedMap){
-ctx.strokeStyle="red"
-ctx.lineWidth=5
-ctx.strokeRect(x-70,240,140,90)
-}
-})
-
-ctx.font="30px JK"
+ctx.font="40px sans-serif"
 
 ctx.fillText(
-"🌋2000　🌙5000　🪐8000",
+skinInfo[selectedSkin],
+640,
+450
+)
+
+ctx.fillStyle="black"
+
+ctx.font="28px sans-serif"
+
+ctx.fillText(
+"🦉🦅:7000　🐉:8000",
+640,
+510
+)
+
+drawBtn(
+440,
+580,
+400,
+80,
+"もどる"
+)
+
+}
+
+function drawMap(){
+
+ctx.fillStyle="#87CEEB"
+
+ctx.fillRect(
+0,
+0,
+1280,
+720
+)
+
+ctx.fillStyle="black"
+
+ctx.textAlign="center"
+
+ctx.font="60px sans-serif"
+
+ctx.fillText(
+"マップ選択",
+640,
+120
+)
+
+ctx.font="55px sans-serif"
+
+maps.forEach((m,i)=>{
+
+let x=
+260+i*250
+
+if(isMapUnlocked(i)){
+
+ctx.fillText(
+m,
+x,
+300
+)
+
+}else{
+
+ctx.fillText(
+"🔒",
+x,
+300
+)
+
+}
+
+if(i==selectedMap){
+
+ctx.strokeStyle="red"
+
+ctx.lineWidth=5
+
+ctx.strokeRect(
+x-70,
+240,
+140,
+90
+)
+
+}
+
+})
+
+ctx.font="30px sans-serif"
+
+ctx.fillStyle="black"
+
+ctx.fillText(
+"🌋5000　🌙8000　🪐9000",
 640,
 500
 )
@@ -431,140 +606,133 @@ drawBtn(
 80,
 "もどる"
 )
-}
 
+}
 function drawGame(){
 
-// 🌳草原
+// 草原
 if(selectedMap==0){
+
 ctx.fillStyle="#87CEEB"
 ctx.fillRect(0,0,1280,720)
 
 ctx.fillStyle="#6ab04c"
 ctx.fillRect(0,600,1280,120)
-}
 
-// 🌋火山
-if(selectedMap==1){
-ctx.fillStyle="#ff5e57"
-ctx.fillRect(0,0,1280,720)
-
-ctx.fillStyle="#3d1f00"
-ctx.fillRect(0,600,1280,120)
-
-ctx.font="120px JK"
-ctx.fillText("🌋",1000,200)
-}
-
-// 🌙月
-if(selectedMap==2){
-ctx.fillStyle="#0f172a"
-ctx.fillRect(0,0,1280,720)
-
-ctx.fillStyle="#888"
-ctx.fillRect(0,600,1280,120)
-
-ctx.font="120px JK"
-ctx.fillText("🌙",1000,200)
-}
-
-// 🪐宇宙
-if(selectedMap==3){
-ctx.fillStyle="#000022"
-ctx.fillRect(0,0,1280,720)
-
-ctx.fillStyle="#111"
-ctx.fillRect(0,600,1280,120)
-
-ctx.font="120px JK"
-ctx.fillText("🪐",1000,200)
-
-for(let i=0;i<40;i++){
-ctx.fillStyle="white"
-ctx.fillRect(
-(i*97)%1280,
-(i*53)%600,
-3,3
-)
-}
-}
 }
 
 // 火山
 if(selectedMap==1){
+
 ctx.fillStyle="#ff6b35"
 ctx.fillRect(0,0,1280,720)
 
 ctx.fillStyle="#3d1f00"
 ctx.fillRect(0,600,1280,120)
+
+ctx.font="120px sans-serif"
+ctx.fillText("🌋",1000,180)
+
 }
 
 // 月
 if(selectedMap==2){
+
 ctx.fillStyle="#0f172a"
 ctx.fillRect(0,0,1280,720)
 
 ctx.fillStyle="#888"
 ctx.fillRect(0,600,1280,120)
+
+ctx.font="120px sans-serif"
+ctx.fillText("🌙",1000,180)
+
 }
 
 // 宇宙
 if(selectedMap==3){
+
 ctx.fillStyle="#000022"
 ctx.fillRect(0,0,1280,720)
 
 ctx.fillStyle="#111"
 ctx.fillRect(0,600,1280,120)
 
-for(let i=0;i<30;i++){
+for(let i=0;i<40;i++){
+
 ctx.fillStyle="white"
+
 ctx.fillRect(
 (i*97)%1280,
-(i*57)%600,
-3,3
+(i*53)%600,
+3,
+3
 )
-}
+
 }
 
-ctx.font="50px JK"
+ctx.font="120px sans-serif"
+ctx.fillText("🪐",1000,180)
+
+}
+
+// プレイヤー
+
+ctx.font="50px sans-serif"
+
+ctx.textAlign="left"
+
 ctx.fillText(
 skins[selectedSkin],
 chicken.x,
 chicken.y+40
 )
 
+// 障害物
+
 obstacles.forEach(o=>{
 
-ctx.font="55px JK"
+ctx.font="55px sans-serif"
 
-if(selectedMap==0){
+if(selectedMap==0)
 ctx.fillText("🌳",o.x,o.y+50)
-}
 
-if(selectedMap==1){
+if(selectedMap==1)
 ctx.fillText("🌋",o.x,o.y+50)
-}
 
-if(selectedMap==2){
+if(selectedMap==2)
 ctx.fillText("☄️",o.x,o.y+50)
-}
 
-if(selectedMap==3){
+if(selectedMap==3)
 ctx.fillText("👾",o.x,o.y+50)
-}
+
 })
 
-ctx.font="30px JK"
+// エフェクト
+
+ctx.font="30px sans-serif"
 
 effects.forEach(e=>{
+
 ctx.globalAlpha=e.life
-ctx.fillText("✨",e.x,e.y)
+
+ctx.fillText(
+"✨",
+e.x,
+e.y
+)
+
 ctx.globalAlpha=1
+
 })
 
-ctx.textAlign="right"
+// スコア
+
 ctx.fillStyle="white"
-ctx.font="32px JK"
+
+ctx.textAlign="right"
+
+ctx.font="32px sans-serif"
 
 ctx.fillText(
 "Score "+score,
@@ -577,119 +745,247 @@ ctx.fillText(
 1220,
 130
 )
-}
 
-ctx.font="50px JK"
-ctx.fillText(skins[selectedSkin],chicken.x,chicken.y+40)
-
-obstacles.forEach(o=>{
-
-ctx.font="55px JK"
-
-if(selectedMap==0) ctx.fillText("🌳",o.x,o.y+50)
-if(selectedMap==1) ctx.fillText("🌋",o.x,o.y+50)
-if(selectedMap==2) ctx.fillText("☄️",o.x,o.y+50)
-if(selectedMap==3) ctx.fillText("👾",o.x,o.y+50)
-
-})
-
-ctx.font="30px JK"
-effects.forEach(e=>{
-ctx.globalAlpha=e.life
-ctx.fillText("✨",e.x,e.y)
-ctx.globalAlpha=1
-})
-
-ctx.textAlign="right"
-ctx.font="32px JK"
-ctx.fillStyle="black"
-ctx.fillText("Score "+score,1220,80)
-ctx.fillText("High "+highScore,1220,130)
 }
 
 function drawGameOver(){
+
 ctx.fillStyle="black"
 ctx.fillRect(0,0,1280,720)
+
 ctx.fillStyle="white"
+
 ctx.textAlign="center"
-ctx.font="70px JK"
-ctx.fillText("GAME OVER",640,220)
-ctx.font="45px JK"
-ctx.fillText("Score "+score,640,320)
-ctx.fillText("High "+highScore,640,380)
-drawBtn(440,450,400,80,"RESTART")
-drawBtn(440,560,400,80,"TITLE")
+
+ctx.font="70px sans-serif"
+
+ctx.fillText(
+"GAME OVER",
+640,
+220
+)
+
+ctx.font="45px sans-serif"
+
+ctx.fillText(
+"Score "+score,
+640,
+320
+)
+
+ctx.fillText(
+"High "+highScore,
+640,
+380
+)
+
+drawBtn(
+440,
+450,
+400,
+80,
+"RESTART"
+)
+
+drawBtn(
+440,
+560,
+400,
+80,
+"TITLE"
+)
+
 }
 
-canvas.addEventListener("click",e=>{
+function getPos(e){
+
+const r=
+canvas.getBoundingClientRect()
+
+const sx=
+canvas.width/r.width
+
+const sy=
+canvas.height/r.height
+
+return{
+
+x:(e.clientX-r.left)*sx,
+y:(e.clientY-r.top)*sy
+
+}
+
+}
+
+function inRect(
+x,y,
+rx,ry,
+rw,rh
+){
+
+return(
+x>rx &&
+x<rx+rw &&
+y>ry &&
+y<ry+rh
+)
+
+}
+
+canvas.addEventListener(
+"click",
+e=>{
+
 let p=getPos(e)
-handleClick(p.x,p.y)
-})
+
+handleClick(
+p.x,
+p.y
+)
+
+}
+)
 
 function handleClick(x,y){
-if(Date.now()<ignoreTapUntil) return
 
 if(state=="title"){
-if(inRect(x,y,440,320,400,80))start("easy")
-if(inRect(x,y,440,420,400,80))start("normal")
-if(inRect(x,y,440,520,400,80))start("hard")
-if(inRect(x,y,440,620,400,70)){state="skin";ignoreTapUntil=Date.now()+300}
-}
-if(inRect(x,y,440,550,400,70)){
+
+if(inRect(x,y,440,280,400,80))
+start("easy")
+
+if(inRect(x,y,440,390,400,80))
+start("normal")
+
+if(inRect(x,y,440,500,400,80))
+start("hard")
+
+if(inRect(x,y,440,610,400,70))
+state="skin"
+
+if(inRect(x,y,20,610,320,70))
 state="map"
-ignoreTapUntil=Date.now()+300
+
 }
+
 else if(state=="skin"){
+
+skins.forEach((s,i)=>{
+
+let sx=
+240+i*150
+
+if(
+inRect(
+x,y,
+sx-40,
+250,
+80,
+80
+)
+){
+
+if(isUnlocked(i)){
+
+selectedSkin=i
+
+localStorage.setItem(
+"skin",
+i
+)
+
+}
+
+}
+
+})
+
+if(inRect(x,y,440,580,400,80))
+state="title"
+
+}
+
 else if(state=="map"){
 
 maps.forEach((m,i)=>{
 
-let mx=180+i*250
+let mx=
+260+i*250
 
-if(inRect(x,y,mx-80,240,160,120)){
+if(
+inRect(
+x,y,
+mx-70,
+240,
+140,
+90
+)
+){
 
 if(isMapUnlocked(i)){
+
 selectedMap=i
-localStorage.setItem("map",i)
+
+localStorage.setItem(
+"map",
+i
+)
+
 }
 
 }
 
 })
 
-if(inRect(x,y,440,580,400,80)){
+if(inRect(x,y,440,580,400,80))
 state="title"
-ignoreTapUntil=Date.now()+300
+
+}
+
+else if(state=="gameover"){
+
+if(inRect(x,y,440,450,400,80)){
+
+reset()
+
+state="game"
+
+}
+
+if(inRect(x,y,440,560,400,80)){
+
+state="title"
+
 }
 
 }
-skins.forEach((s,i)=>{
-let sx=240+i*150
-if(inRect(x,y,sx-40,250,80,80)){
-if(isUnlocked(i)){
-selectedSkin=i
-localStorage.setItem("skin",i)
-}
-}
-})
-if(inRect(x,y,440,580,400,80)){state="title";ignoreTapUntil=Date.now()+300}
-}
-else if(state=="gameover"){
-if(inRect(x,y,440,450,400,80)){reset();state="game"}
-if(inRect(x,y,440,560,400,80)){state="title";ignoreTapUntil=Date.now()+600}
-}
+
 }
 
 function loop(){
+
 update()
-if(state=="title")drawTitle()
-if(state=="skin")drawSkin()
-if(state=="map")drawMap()
-if(state=="game")drawGame()
-if(state=="gameover")drawGameOver()
+
+if(state=="title")
+drawTitle()
+
+if(state=="skin")
+drawSkin()
+
+if(state=="map")
+drawMap()
+
+if(state=="game")
+drawGame()
+
+if(state=="gameover")
+drawGameOver()
+
 requestAnimationFrame(loop)
+
 }
+
 loop()
+
 </script>
 </body>
 </html>
