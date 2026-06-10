@@ -48,8 +48,11 @@ height:100%;
 
 <script>
 
-const canvas=document.getElementById("game")
-const ctx=canvas.getContext("2d")
+const canvas=
+document.getElementById("game")
+
+const ctx=
+canvas.getContext("2d")
 
 canvas.width=1280
 canvas.height=720
@@ -57,21 +60,10 @@ canvas.height=720
 let state="title"
 
 let score=0
+
 let highScore=
 Number(
 localStorage.getItem("high")||0
-)
-
-let maps=[
-"🌳草原",
-"🌋火山",
-"🌙月",
-"🪐宇宙"
-]
-
-let selectedMap=
-Number(
-localStorage.getItem("map")||0
 )
 
 let skins=[
@@ -99,37 +91,20 @@ let skinInfo=[
 
 function isUnlocked(i){
 
-if(i<=2) return true
+if(i<=2)return true
 
-if(i==3 && highScore>=7000)
+if(i==3&&highScore>=7000)
 return true
 
-if(i==4 && highScore>=7000)
+if(i==4&&highScore>=7000)
 return true
 
-if(i==5 && highScore>=8000)
-return true
-
-return false
-}
-
-function isMapUnlocked(i){
-
-if(i==0) return true
-
-if(i==1 && highScore>=5000)
-return true
-
-if(i==2 && highScore>=8000)
-return true
-
-if(i==3 && highScore>=9000)
+if(i==5&&highScore>=8000)
 return true
 
 return false
-}
 
-// 能力
+}
 
 let jumpPower=16
 let gravity=0.8
@@ -167,8 +142,7 @@ gravity=0.75
 }
 
 }
-
-// 音
+// 効果音
 
 let audioCtx
 let soundEnabled=false
@@ -225,7 +199,10 @@ osc.connect(gain)
 gain.connect(audioCtx.destination)
 
 osc.start()
-osc.stop(audioCtx.currentTime+0.15)
+
+osc.stop(
+audioCtx.currentTime+0.15
+)
 
 }
 
@@ -257,16 +234,21 @@ osc.connect(gain)
 gain.connect(audioCtx.destination)
 
 osc.start()
-osc.stop(audioCtx.currentTime+0.3)
+
+osc.stop(
+audioCtx.currentTime+0.3
+)
 
 }
+
 // エフェクト
 
 let effects=[]
 
 function createEffect(){
 
-if(selectedSkin!=5)return
+if(selectedSkin!=5)
+return
 
 for(let i=0;i<6;i++){
 
@@ -286,7 +268,7 @@ life:1
 
 }
 
-// ゲーム
+// ゲーム本体
 
 let baseSpeed=7
 let speed=7
@@ -294,75 +276,6 @@ let maxSpeed=15
 
 let chicken
 let obstacles=[]
-
-let ignoreTapUntil=0
-
-let lastInputTime=0
-const inputGap=200
-
-function tap(){
-
-enableSound()
-
-if(state!="game")
-return
-
-let now=Date.now()
-
-if(
-now-lastInputTime
-<
-inputGap
-)return
-
-lastInputTime=now
-
-if(chicken.jump<2){
-
-if(chicken.jump===0){
-
-chicken.vy=
--jumpPower
-
-}
-else{
-
-chicken.vy=
--(jumpPower-2)
-
-}
-
-chicken.jump++
-
-createEffect()
-
-playJump()
-
-}
-
-}
-
-// スマホ
-
-if(
-'ontouchstart'
-in
-window
-){
-
-document.addEventListener(
-"touchstart",
-tap
-)
-
-}else{
-
-document.addEventListener(
-"mousedown",
-tap
-)
-
-}
 
 function reset(){
 
@@ -377,11 +290,11 @@ jump:0
 
 }
 
+score=0
+
 obstacles=[]
 
 effects=[]
-
-score=0
 
 speed=baseSpeed
 
@@ -414,8 +327,69 @@ reset()
 
 state="game"
 
-ignoreTapUntil=
-Date.now()+500
+}
+
+let lastInputTime=0
+
+function tap(){
+
+enableSound()
+
+if(state!="game")
+return
+
+let now=Date.now()
+
+if(
+now-lastInputTime
+<200
+)return
+
+lastInputTime=now
+
+// 二段ジャンプ
+
+if(chicken.jump<2){
+
+if(chicken.jump===0){
+
+chicken.vy=
+-jumpPower
+
+}else{
+
+chicken.vy=
+-(jumpPower-2)
+
+}
+
+chicken.jump++
+
+createEffect()
+
+playJump()
+
+}
+
+}
+
+if(
+'ontouchstart'
+in
+window
+){
+
+document.addEventListener(
+"touchstart",
+tap
+)
+
+}else{
+
+document.addEventListener(
+"mousedown",
+tap
+)
 
 }
 
@@ -449,7 +423,7 @@ chicken.y=560
 
 chicken.vy=0
 
-// 二段ジャンプ復活
+// 着地で二段ジャンプリセット
 
 chicken.jump=0
 
@@ -514,7 +488,6 @@ highScore
 effects.forEach(e=>{
 
 e.x+=e.vx
-
 e.y+=e.vy
 
 e.life-=0.03
@@ -560,6 +533,7 @@ y+h/2+12
 function drawTitle(){
 
 ctx.fillStyle="#87CEEB"
+
 ctx.fillRect(
 0,0,
 1280,720
@@ -577,7 +551,7 @@ ctx.fillText(
 180
 )
 
-// 2列UI
+// 2列ボタン
 
 drawBtn(
 220,280,
@@ -603,10 +577,12 @@ drawBtn(
 "スキン"
 )
 
-drawBtn(
-465,520,
-350,80,
-"マップ"
+ctx.font="32px JK"
+
+ctx.fillText(
+"High Score : "+highScore,
+640,
+560
 )
 
 }
@@ -616,6 +592,7 @@ drawBtn(
 function drawSkin(){
 
 ctx.fillStyle="#87CEEB"
+
 ctx.fillRect(
 0,0,
 1280,720
@@ -690,198 +667,47 @@ ctx.fillStyle="black"
 ctx.font="28px JK"
 
 ctx.fillText(
-"🦉🦅 7000",
+"🦉🦅 解放:7000",
 640,
-510
+520
 )
 
 ctx.fillText(
-"🐉 8000",
+"🐉 解放:8000",
 640,
-550
+560
 )
 
 drawBtn(
 440,
-610,
+620,
 400,
 70,
 "もどる"
 )
 
 }
-
-// マップ画面
-
-function drawMap(){
-
-ctx.fillStyle="#87CEEB"
-
-ctx.fillRect(
-0,0,
-1280,720
-)
-
-ctx.fillStyle="black"
-
-ctx.textAlign="center"
-
-ctx.font="60px JK"
-
-ctx.fillText(
-"マップ選択",
-640,
-120
-)
-
-ctx.font="55px JK"
-
-maps.forEach((m,i)=>{
-
-let x=
-260+i*250
-
-if(
-isMapUnlocked(i)
-){
-
-ctx.fillText(
-m,
-x,
-300
-)
-
-}else{
-
-ctx.fillText(
-"🔒",
-x,
-300
-)
-
-}
-
-if(
-i==
-selectedMap
-){
-
-ctx.strokeStyle="red"
-
-ctx.lineWidth=5
-
-ctx.strokeRect(
-x-70,
-240
-// ゲーム描画
+// ゲーム画面
 
 function drawGame(){
 
-// 🌳草原
-
-if(selectedMap==0){
+// 背景
 
 ctx.fillStyle="#87CEEB"
+
 ctx.fillRect(
 0,0,
 1280,720
 )
+
+// 地面
 
 ctx.fillStyle="#6ab04c"
+
 ctx.fillRect(
 0,600,
 1280,120
 )
-
-}
-
-// 🌋火山
-
-if(selectedMap==1){
-
-ctx.fillStyle="#ff6b35"
-ctx.fillRect(
-0,0,
-1280,720
-)
-
-ctx.fillStyle="#3d1f00"
-ctx.fillRect(
-0,600,
-1280,120
-)
-
-ctx.font="120px JK"
-ctx.fillText(
-"🌋",
-1050,
-180
-)
-
-}
-
-// 🌙月
-
-if(selectedMap==2){
-
-ctx.fillStyle="#0f172a"
-ctx.fillRect(
-0,0,
-1280,720
-)
-
-ctx.fillStyle="#888"
-ctx.fillRect(
-0,600,
-1280,120
-)
-
-ctx.font="120px JK"
-ctx.fillText(
-"🌙",
-1050,
-180
-)
-
-}
-
-// 🪐宇宙
-
-if(selectedMap==3){
-
-ctx.fillStyle="#000022"
-ctx.fillRect(
-0,0,
-1280,720
-)
-
-ctx.fillStyle="#111"
-ctx.fillRect(
-0,600,
-1280,120
-)
-
-ctx.font="120px JK"
-ctx.fillText(
-"🪐",
-1050,
-180
-)
-
-for(let i=0;i<40;i++){
-
-ctx.fillStyle="white"
-
-ctx.fillRect(
-(i*97)%1280,
-(i*57)%600,
-3,
-3
-)
-
-}
-
-}
 
 // プレイヤー
 
@@ -899,45 +725,11 @@ obstacles.forEach(o=>{
 
 ctx.font="55px JK"
 
-if(selectedMap==0){
-
 ctx.fillText(
 "🌳",
 o.x,
 o.y+50
 )
-
-}
-
-if(selectedMap==1){
-
-ctx.fillText(
-"🌋",
-o.x,
-o.y+50
-)
-
-}
-
-if(selectedMap==2){
-
-ctx.fillText(
-"☄️",
-o.x,
-o.y+50
-)
-
-}
-
-if(selectedMap==3){
-
-ctx.fillText(
-"👾",
-o.x,
-o.y+50
-)
-
-}
 
 })
 
@@ -947,7 +739,8 @@ ctx.font="30px JK"
 
 effects.forEach(e=>{
 
-ctx.globalAlpha=e.life
+ctx.globalAlpha=
+e.life
 
 ctx.fillText(
 "✨",
@@ -963,14 +756,9 @@ ctx.globalAlpha=1
 
 ctx.textAlign="right"
 
-ctx.font="32px JK"
+ctx.fillStyle="black"
 
-ctx.fillStyle=
-selectedMap>=2
-?
-"white"
-:
-"black"
+ctx.font="32px JK"
 
 ctx.fillText(
 "Score "+score,
@@ -990,6 +778,7 @@ ctx.fillText(
 function drawGameOver(){
 
 ctx.fillStyle="black"
+
 ctx.fillRect(
 0,0,
 1280,720
@@ -1012,18 +801,18 @@ ctx.font="45px JK"
 ctx.fillText(
 "Score "+score,
 640,
-320
+330
 )
 
 ctx.fillText(
 "High "+highScore,
 640,
-390
+400
 )
 
 drawBtn(
 440,
-470,
+500,
 400,
 80,
 "RESTART"
@@ -1031,7 +820,7 @@ drawBtn(
 
 drawBtn(
 440,
-580,
+600,
 400,
 80,
 "TITLE"
@@ -1043,22 +832,26 @@ drawBtn(
 
 function getPos(e){
 
-const r=
+const rect=
 canvas.getBoundingClientRect()
 
-const sx=
-canvas.width/r.width
+const scaleX=
+canvas.width/
+rect.width
 
-const sy=
-canvas.height/r.height
+const scaleY=
+canvas.height/
+rect.height
 
 return{
 
 x:
-(e.clientX-r.left)*sx,
+(e.clientX-rect.left)
+*scaleX,
 
 y:
-(e.clientY-r.top)*sy
+(e.clientY-rect.top)
+*scaleY
 
 }
 
@@ -1071,10 +864,12 @@ rw,rh
 ){
 
 return(
+
 x>rx &&
 x<rx+rw &&
 y>ry &&
 y<ry+rh
+
 )
 
 }
@@ -1085,7 +880,8 @@ canvas.addEventListener(
 "click",
 e=>{
 
-let p=getPos(e)
+let p=
+getPos(e)
 
 handleClick(
 p.x,
@@ -1102,27 +898,43 @@ function handleClick(x,y){
 if(state=="title"){
 
 if(
-inRect(x,y,220,280,350,80)
-) start("easy")
-
-if(
-inRect(x,y,710,280,350,80)
-) start("normal")
-
-if(
-inRect(x,y,220,400,350,80)
-) start("hard")
-
-if(
-inRect(x,y,710,400,350,80)
+inRect(
+x,y,
+220,280,
+350,80
+)
 ){
-state="skin"
+start("easy")
 }
 
 if(
-inRect(x,y,465,520,350,80)
+inRect(
+x,y,
+710,280,
+350,80
+)
 ){
-state="map"
+start("normal")
+}
+
+if(
+inRect(
+x,y,
+220,400,
+350,80
+)
+){
+start("hard")
+}
+
+if(
+inRect(
+x,y,
+710,400,
+350,80
+)
+){
+state="skin"
 }
 
 }
@@ -1139,8 +951,7 @@ let sx=
 if(
 
 inRect(
-x,
-y,
+x,y,
 sx-40,
 250,
 80,
@@ -1167,64 +978,16 @@ i
 if(
 inRect(
 x,y,
-440,610,
+440,620,
 400,70
 )
 ){
-
 state="title"
-
 }
 
 }
 
-// マップ
-
-else if(state=="map"){
-
-maps.forEach((m,i)=>{
-
-let mx=
-260+i*250
-
-if(
-
-inRect(
-x,
-y,
-mx-70,
-240,
-140,
-90
-)
-
-&&
-
-isMapUnlocked(i)
-
-){
-
-selectedMap=i
-
-}
-
-})
-
-if(
-inRect(
-x,y,
-440,610,
-400,70
-)
-){
-
-state="title"
-
-}
-
-}
-
-// GAMEOVER
+// GAME OVER
 
 else if(
 state=="gameover"
@@ -1233,7 +996,7 @@ state=="gameover"
 if(
 inRect(
 x,y,
-440,470,
+440,500,
 400,80
 )
 ){
@@ -1247,7 +1010,7 @@ state="game"
 if(
 inRect(
 x,y,
-440,580,
+440,600,
 400,80
 )
 ){
@@ -1266,20 +1029,21 @@ function loop(){
 
 update()
 
-if(state=="title")
+if(state=="title"){
 drawTitle()
+}
 
-if(state=="skin")
+if(state=="skin"){
 drawSkin()
+}
 
-if(state=="map")
-drawMap()
-
-if(state=="game")
+if(state=="game"){
 drawGame()
+}
 
-if(state=="gameover")
+if(state=="gameover"){
 drawGameOver()
+}
 
 requestAnimationFrame(
 loop
@@ -1288,3 +1052,7 @@ loop
 }
 
 loop()
+
+</script>
+</body>
+</html>
