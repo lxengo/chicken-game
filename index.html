@@ -72,7 +72,8 @@ let skins=[
 "🍗",
 "🦉",
 "🦅",
-"🐉"
+"🐉",
+"🦜"
 ]
 
 let selectedSkin=
@@ -86,6 +87,7 @@ let skinInfo=[
 "★★★",
 "★★★★",
 "★★★★",
+"★★★★★",
 "★★★★★"
 ]
 
@@ -102,6 +104,8 @@ return true
 if(i==5&&highScore>=8000)
 return true
 
+if(i==6 && highScore>=10000) 
+return true
 return false
 
 }
@@ -139,6 +143,11 @@ gravity=0.76
 if(selectedSkin==5){
 jumpPower=20
 gravity=0.75
+}
+
+if(selectedSkin==6){
+jumpPower=20
+gravity=0.55
 }
 
 }
@@ -743,7 +752,7 @@ ctx.globalAlpha=
 e.life
 
 ctx.fillText(
-"✨",
+e.emoji || "✨",
 e.x,
 e.y
 )
